@@ -1,0 +1,36 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+// Configurar variables de entorno
+dotenv.config();
+
+const app = express();
+
+// Middlewares
+app.use(cors());
+app.use(express.json());
+
+// Rutas (placeholder)
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', message: 'API funcionando correctamente.' });
+});
+
+import authRoutes from './routes/auth.routes';
+import pacientesRoutes from './routes/pacientes.routes';
+
+// app.use('/api/auth', authRoutes);
+// app.use('/api/pacientes', pacientesRoutes);
+import profesionalesRoutes from './routes/profesionales.routes';
+import turnosRoutes from './routes/turnos.routes';
+import hcRoutes from './routes/historiasClinicas.routes';
+import pagosRoutes from './routes/pagos.routes';
+
+app.use('/api/auth', authRoutes);
+app.use('/api/pacientes', pacientesRoutes);
+app.use('/api/profesionales', profesionalesRoutes);
+app.use('/api/turnos', turnosRoutes);
+app.use('/api/historias-clinicas', hcRoutes);
+app.use('/api/pagos', pagosRoutes);
+
+export default app;
