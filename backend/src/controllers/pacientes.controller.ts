@@ -80,6 +80,17 @@ export const updatePaciente = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const pacienteData = req.body;
+    const centroMedicoId = req.user?.centroMedicoId!;
+
+    // Validar DNI si se intenta cambiar
+    if (pacienteData.dni) {
+      const existe = await prisma.paciente.findFirst({
+        where: { centroMedicoId, dni: pacienteData.dni, id: { not: id } }
+      });
+      if (existe) {
+        return res.status(400).json({ message: 'El DNI ya pertenece a otro paciente' });
+      }
+    }
 
     const paciente = await prisma.paciente.update({
       where: { id },
@@ -89,5 +100,17 @@ export const updatePaciente = async (req: Request, res: Response) => {
     res.json(paciente);
   } catch (error) {
     res.status(500).json({ message: 'Error al actualizar paciente' });
+  }
+};
+
+export const deletePaciente = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    await prisma.paciente.delete({
+      where: { id }
+    });
+    res.json({ message: 'Paciente eliminado correctamente' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al eliminar paciente' });
   }
 };

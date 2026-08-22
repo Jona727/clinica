@@ -11,17 +11,21 @@ export const getHistorialPaciente = async (req: Request, res: Response) => {
       return res.status(403).json({ message: 'Acceso denegado: Confidencialidad médica' });
     }
 
+    let whereClause: any = { pacienteId };
+
+    if (rol === 'PROFESIONAL') {
+      whereClause.OR = [
+        { esConfidencial: false },
+        { profesionalId }
+      ];
+    } else if (rol !== 'ADMIN') {
+      // Si no es ADMIN ni PROFESIONAL, solo ve las no confidenciales
+      whereClause.esConfidencial = false;
+    }
+    // Si es ADMIN, no añadimos filtros adicionales, ve todas.
+
     const evoluciones = await prisma.evolucionClinica.findMany({
-      where: {
-        pacienteId,
-        // Si es profesional y la nota es confidencial, solo la ve si él es el autor
-        // (Simplificado: si es profesional, ve las propias, si no son confidenciales las ven todos)
-        OR: [
-          { esConfidencial: false },
-          ...(rol === 'PROFESIONAL' ? [{ profesionalId }] : []),
-          ...(rol === 'ADMIN' ? [{}] : []) // Admin ve todo
-        ]
-      },
+      where: whereClause,
       include: {
         profesional: { select: { nombre: true, apellido: true, especialidad: true } },
         turno: { select: { fechaHoraInicio: true } }
@@ -39,21 +43,39 @@ export const createEvolucion = async (req: Request, res: Response) => {
   try {
     const { pacienteId, turnoId, motivoConsulta, notaClinica, diagnostico, planTratamiento, esConfidencial } = req.body;
     
-    // Solo profesionales pueden crear evoluciones
-    if (req.user?.rol !== 'PROFESIONAL') {
-      return res.status(403).json({ message: 'Solo los profesionales pueden crear evoluciones' });
+    const rol = req.user?.rol;
+    const profesionalId = req.user?.profesionalId;
+
+    if (!profesionalId || (rol !== 'PROFESIONAL' && rol !== 'ADMIN')) {
+      return res.status(403).json({ message: 'Solo los perfiles profesionales autorizados pueden crear evoluciones' });
+    }
+
+    let adjuntosPaths: string[] = [];
+    if (req.files && Array.isArray(req.files)) {
+      adjuntosPaths = req.files.map((file: Express.Multer.File) => `/uploads/${file.filename}`);
+    }
+
+    // Validación anti-duplicados por turno
+    if (turnoId) {
+      const turnoExistente = await prisma.evolucionClinica.findUnique({
+        where: { turnoId }
+      });
+      if (turnoExistente) {
+        return res.status(400).json({ message: 'Este turno ya tiene una Historia Clínica cargada. No se pueden duplicar las notas de una misma consulta.' });
+      }
     }
 
     const evolucion = await prisma.evolucionClinica.create({
       data: {
         pacienteId,
-        profesionalId: req.user.profesionalId!,
-        turnoId,
+        profesionalId: profesionalId,
+        turnoId: turnoId || null,
         motivoConsulta,
         notaClinica,
         diagnostico,
         planTratamiento,
-        esConfidencial: esConfidencial ?? true
+        adjuntos: adjuntosPaths,
+        esConfidencial: esConfidencial === 'true' || esConfidencial === true
       }
     });
 

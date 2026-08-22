@@ -146,6 +146,7 @@ model EvolucionClinica {
   notaClinica     String       @db.Text
   diagnostico     String?
   planTratamiento String?      @db.Text
+  adjuntos        String[]     @default([])
   
   esConfidencial  Boolean      @default(true)
   estaFirmada     Boolean      @default(false)

@@ -10,6 +10,7 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
 
 // Rutas (placeholder)
 app.get('/api/health', (req, res) => {

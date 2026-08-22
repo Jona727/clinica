@@ -6,6 +6,32 @@ export const registrarCobro = async (req: Request, res: Response) => {
   try {
     const { pacienteId, turnoId, montoTotal, montoCopago, montoCobertura, metodoPago, comprobanteNro, observaciones } = req.body;
 
+    if (!turnoId) {
+      return res.status(400).json({ message: 'Todo pago debe estar estrictamente vinculado a un Turno.' });
+    }
+
+    // Validaciones estrictas del Turno
+    const turno = await prisma.turno.findUnique({
+      where: { id: turnoId },
+      include: { pago: true }
+    });
+
+    if (!turno) {
+      return res.status(404).json({ message: 'El turno especificado no existe.' });
+    }
+
+    if (turno.pacienteId !== pacienteId) {
+      return res.status(400).json({ message: 'Inconsistencia: El turno no pertenece al paciente seleccionado.' });
+    }
+
+    if (turno.pago) {
+      return res.status(400).json({ message: 'Control Antifraude: Este turno ya registra un pago asociado. No se permiten pagos dobles.' });
+    }
+
+    if (new Date(turno.fechaHoraInicio) > new Date()) {
+      return res.status(400).json({ message: 'Control de Flujo: No se pueden registrar cobros de consultas que aún no han ocurrido.' });
+    }
+
     const pago = await prisma.pago.create({
       data: {
         pacienteId,
@@ -20,13 +46,9 @@ export const registrarCobro = async (req: Request, res: Response) => {
       }
     });
 
-    // Si está asociado a un turno, opcionalmente marcamos el turno como pagado o finalizado
-    if (turnoId) {
-      // Logica adicional si es necesario
-    }
-
     res.status(201).json(pago);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Error al registrar cobro' });
   }
 };

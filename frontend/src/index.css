@@ -18,7 +18,7 @@
 /* Remover bordes rígidos */
 .custom-calendar-theme .fc-theme-standard td, 
 .custom-calendar-theme .fc-theme-standard th {
-  border-color: #f3f4f6; /* gray-100 */
+  border-color: #e5e7eb; /* gray-200 / warm-200 equivalent para mayor contraste */
 }
 .custom-calendar-theme .fc-theme-standard .fc-scrollgrid {
   border: none;

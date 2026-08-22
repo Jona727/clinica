@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getPacientes, getPacienteById, createPaciente, updatePaciente } from '../controllers/pacientes.controller';
+import { getPacientes, getPacienteById, createPaciente, updatePaciente, deletePaciente } from '../controllers/pacientes.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { rbacMiddleware } from '../middlewares/rbac.middleware';
 import { RolUsuario } from '@prisma/client';
@@ -12,8 +12,12 @@ router.use(authMiddleware);
 router.get('/', getPacientes);
 router.get('/:id', getPacienteById);
 
-// Recepcion y Admin pueden crear/editar
-router.post('/', rbacMiddleware([RolUsuario.ADMIN, RolUsuario.RECEPCION]), createPaciente);
-router.put('/:id', rbacMiddleware([RolUsuario.ADMIN, RolUsuario.RECEPCION]), updatePaciente);
+// Permitir crear/editar/eliminar a ADMIN, RECEPCION y PROFESIONAL
+const rolesPermitidos = [RolUsuario.ADMIN, RolUsuario.RECEPCION, RolUsuario.PROFESIONAL];
+router.post('/', rbacMiddleware(rolesPermitidos), createPaciente);
+router.put('/:id', rbacMiddleware(rolesPermitidos), updatePaciente);
+import { sudoMiddleware } from '../middlewares/sudo.middleware';
+
+router.delete('/:id', rbacMiddleware(rolesPermitidos), sudoMiddleware, deletePaciente);
 
 export default router;

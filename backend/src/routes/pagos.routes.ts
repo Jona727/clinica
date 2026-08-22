@@ -7,8 +7,8 @@ import { RolUsuario } from '@prisma/client';
 const router = Router();
 router.use(authMiddleware);
 
-// Recepción y Admin manejan la caja
-router.post('/', rbacMiddleware([RolUsuario.ADMIN, RolUsuario.RECEPCION]), registrarCobro);
-router.get('/', rbacMiddleware([RolUsuario.ADMIN, RolUsuario.RECEPCION]), getPagos);
+// Todos manejan la caja en este contexto
+router.post('/', rbacMiddleware([RolUsuario.ADMIN, RolUsuario.RECEPCION, RolUsuario.PROFESIONAL]), registrarCobro);
+router.get('/', rbacMiddleware([RolUsuario.ADMIN, RolUsuario.RECEPCION, RolUsuario.PROFESIONAL]), getPagos);
 
 export default router;

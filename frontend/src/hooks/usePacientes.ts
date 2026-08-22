@@ -22,11 +22,36 @@ export const usePacientes = () => {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, ...updatedPaciente }: any) => {
+      const { data } = await api.put(`/pacientes/${id}`, updatedPaciente);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pacientes'] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async ({ id, sudoPassword }: { id: string, sudoPassword?: string }) => {
+      const config = sudoPassword ? { headers: { 'x-sudo-password': sudoPassword } } : undefined;
+      const { data } = await api.delete(`/pacientes/${id}`, config);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pacientes'] });
+    },
+  });
+
   return {
     pacientes: query.data || [],
     isLoading: query.isPending,
     error: query.error,
     createPaciente: createMutation.mutateAsync,
     isCreating: createMutation.isPending,
+    updatePaciente: updateMutation.mutateAsync,
+    isUpdating: updateMutation.isPending,
+    deletePaciente: deleteMutation.mutateAsync,
+    isDeleting: deleteMutation.isPending,
   };
 };
