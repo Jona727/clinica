@@ -89,22 +89,36 @@ Todo el proyecto (backend, base de datos y frontend) corre junto en un mismo ser
 - **Hostinger VPS** — si preferís mantener todo en una sola cuenta/facturación ya que sos cliente de Hostinger. Sus planes de VPS (no confundir con el hosting compartido) sí corren Node.js sin restricciones.
 - **DigitalOcean** — desde $4/mes, muy buena documentación y tutoriales para quien recién empieza con VPS.
 
-Cualquiera alcanza de sobra para el uso de un consultorio: el plan más chico de cualquiera de los tres sirve.
+Cualquiera alcanza de sobra para el uso de un consultorio: el plan más chico de cualquiera de los tres sirve. El mismo VPS puede alojar varios proyectos a la vez (ver más abajo), así que no hace falta contratar uno nuevo por cada proyecto futuro.
 
-**Primera vez, en el VPS (Ubuntu):**
+#### El proxy compartido (`deploy/proxy/`)
+
+Este proyecto está pensado para convivir con otros en el mismo VPS. Por eso el `docker-compose.yml` **no** expone el puerto 80 directamente — en su lugar, hay un [Caddy](https://caddyfile.com/) compartido que es el único que escucha los puertos 80/443 de todo el servidor, y reparte el tráfico a cada proyecto según el dominio con el que entraron. Caddy además consigue y renueva el certificado HTTPS de cada dominio automáticamente, sin configuración extra.
+
+`deploy/proxy/` **no es parte de este proyecto** — es infraestructura del VPS. Se instala **una sola vez por servidor**, en una carpeta aparte (no dentro del clone de ningún repo), por ejemplo `/opt/proxy`.
+
+**Primera vez en un VPS nuevo (una sola vez, sirve para todos los proyectos futuros):**
 
 1. Instalar Docker: seguir la [guía oficial](https://docs.docker.com/engine/install/ubuntu/) (o el instalador rápido: `curl -fsSL https://get.docker.com | sh`).
-2. Clonar el repo: `git clone <url-del-repo> && cd clinica`.
-3. Copiar `.env.example` a `.env` en la raíz y completar `DB_PASSWORD` y `JWT_SECRET` con valores propios (`openssl rand -base64 48` genera uno bueno para el segundo).
-4. Levantar todo: `docker compose up -d --build`.
-5. Cargar los datos iniciales (**solo la primera vez**): `docker compose exec backend npx tsx prisma/seed.ts`.
-6. Apuntar el dominio/subdominio (registro DNS tipo A) a la IP del VPS. El sitio queda escuchando en el puerto 80.
+2. Copiar la carpeta `deploy/proxy/` del repo a `/opt/proxy` en el VPS (o clonar el repo y copiarla de ahí).
+3. En `/opt/proxy/Caddyfile`, cambiar `clinica.tudominio.com` por tu dominio o subdominio real.
+4. `cd /opt/proxy && docker compose up -d`. Esto crea la red compartida `proxy-net` y deja a Caddy escuchando los puertos 80/443.
+
+**Primera vez con este proyecto (clinica):**
+
+1. Clonar el repo en el VPS: `git clone <url-del-repo> && cd clinica`.
+2. Copiar `.env.example` a `.env` en la raíz y completar `DB_PASSWORD` y `JWT_SECRET` con valores propios (`openssl rand -base64 48` genera uno bueno para el segundo).
+3. Levantar todo: `docker compose up -d --build`. El servicio `web` se conecta solo a la red `proxy-net` (tiene que existir de antes, por eso el paso anterior va primero) con el nombre fijo `clinica-web`, que es al que ya apunta el Caddyfile.
+4. Cargar los datos iniciales (**solo la primera vez**): `docker compose exec backend npx tsx prisma/seed.ts`.
+5. Apuntar el DNS del dominio/subdominio (registro tipo A) a la IP del VPS. En un par de minutos, Caddy ya sirve el sitio con HTTPS solo.
+
+**Para sumar un proyecto nuevo más adelante:** en su propio `docker-compose.yml`, seguir el mismo patrón que el de este repo — el servicio "puerta de entrada" (el que sirve el frontend) sin `ports:`, con `container_name` propio y único, conectado a la red externa `proxy-net`. Después, agregar un bloque nuevo en `/opt/proxy/Caddyfile` con su dominio apuntando a ese nombre, y `docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile` (no hace falta reiniciar nada).
+
+**Aislamiento:** el backend y la base de datos de cada proyecto **no** se conectan a `proxy-net` — solo el contenedor `web`. Ni el proxy compartido ni otros proyectos del mismo VPS pueden alcanzarlos directamente.
 
 **Después de la primera vez:** para actualizar tras un cambio en el código, en el VPS: `git pull && docker compose up -d --build`. Las migraciones de Prisma se aplican solas en cada arranque del backend.
 
-**Pendiente, no automatizado todavía:** HTTPS (certificado SSL). Con dominio propio apuntando al VPS, se agrega fácil con [Certbot](https://certbot.eff.org/) corriendo delante de Nginx — avisame cuando llegues a ese paso y lo dejamos armado.
-
-Se probó localmente el `docker-compose.yml` completo (los tres contenedores levantados juntos, con login, migraciones automáticas y el proxy de Nginx hacia la API) antes de dejarlo documentado acá.
+Se probó localmente la arquitectura completa (proxy compartido + los tres contenedores del proyecto, con login de punta a punta pasando por Caddy, y confirmando que el backend y la base no son alcanzables desde la red del proxy) antes de dejarlo documentado acá.
 
 ### Opción B: Render (backend + frontend) + Neon (base de datos) — gratis, sin VPS
 
