@@ -75,3 +75,31 @@ Por defecto el frontend corre en `http://localhost:5173` y espera a la API en `h
 
 - Usuario: `psicologa`
 - Contraseña: `admin123`
+
+## Despliegue en producción
+
+**Importante:** InfinityFree (y la mayoría de los hostings gratuitos tipo "PHP + MySQL") solo sirve archivos estáticos y PHP — **no puede correr el backend** (Node.js/Express) ni una base de datos PostgreSQL. Ahí solo puede alojarse el **frontend**, ya compilado como HTML/CSS/JS estático. El backend necesita un hosting que corra Node.js con una base PostgreSQL (por ejemplo Railway, Render o Fly.io — todos tienen planes gratuitos o muy económicos que alcanzan para este proyecto).
+
+### Frontend → InfinityFree (automático)
+
+El repo incluye `.github/workflows/deploy-frontend.yml`: cada push a `main` que toque `frontend/` compila el sitio y lo sube por FTP a InfinityFree automáticamente.
+
+Para activarlo, en GitHub → *Settings → Secrets and variables → Actions* de este repositorio, cargar:
+
+**Secrets** (datos sensibles, no se ven en los logs):
+- `FTP_SERVER`: el host FTP que te dio InfinityFree (algo como `ftpupload.net`).
+- `FTP_USERNAME`: tu usuario FTP de InfinityFree.
+- `FTP_PASSWORD`: tu contraseña FTP de InfinityFree.
+
+**Variables** (no sensibles):
+- `VITE_API_URL`: la URL pública de tu backend ya desplegado, terminada en `/api` (ej. `https://tu-backend.onrender.com/api`). Sin esto, el sitio se compila apuntando a `http://localhost:3000/api` y no va a poder hablar con ningún backend real.
+- `FTP_SERVER_DIR` (opcional): la carpeta remota donde subir el sitio. Por defecto usa `/htdocs/`, que es la raíz web estándar de InfinityFree — pero si el sitio vive en un subdominio o dominio adicional, puede ser otra carpeta (se ve en el File Manager de InfinityFree).
+
+También se puede disparar a mano desde la pestaña *Actions* del repo (botón "Run workflow"), sin esperar a un push.
+
+### Backend → un hosting con Node.js
+
+Todavía sin definir/automatizar. Una vez que se elija dónde va a vivir (Railway, Render, Fly.io, etc.), hay que:
+1. Desplegar `backend/` ahí, con las mismas variables de entorno que en local (`DATABASE_URL` apuntando a una base Postgres real, `JWT_SECRET`, `PORT`).
+2. Correr `npx prisma migrate deploy` contra esa base para crear las tablas.
+3. Cargar esa URL pública como `VITE_API_URL` (ver arriba) para que el frontend en InfinityFree le hable a ese backend.
