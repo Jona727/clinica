@@ -10,7 +10,9 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
+// Los adjuntos de historias clínicas son confidenciales: se sirven solo vía
+// /api/historias-clinicas/adjuntos/:filename (requiere login y respeta las
+// mismas reglas de confidencialidad que el resto de la historia clínica).
 
 // Rutas (placeholder)
 app.get('/api/health', (req, res) => {

@@ -136,7 +136,16 @@ export const HistoriasClinicas = () => {
     doc.save(`Historia_Clinica_${selectedPaciente.dni}.pdf`);
   };
 
-  const getFullUrl = (path: string) => `http://localhost:3000${path}`;
+  const verAdjunto = async (path: string) => {
+    try {
+      const filename = path.split('/').pop();
+      const response = await api.get(`/historias-clinicas/adjuntos/${filename}`, { responseType: 'blob' });
+      const blobUrl = URL.createObjectURL(response.data);
+      window.open(blobUrl, '_blank');
+    } catch {
+      toast.error('No se pudo abrir el archivo adjunto');
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 h-full flex flex-col relative">
@@ -240,10 +249,10 @@ export const HistoriasClinicas = () => {
                                   {ev.adjuntos.map((url: string, i: number) => {
                                     const isPdf = url.toLowerCase().endsWith('.pdf');
                                     return (
-                                      <a key={i} href={getFullUrl(url)} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors text-sm font-medium text-brand-700">
+                                      <button key={i} type="button" onClick={() => verAdjunto(url)} className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors text-sm font-medium text-brand-700">
                                         {isPdf ? <FileText className="w-4 h-4 text-red-500" /> : <FileImage className="w-4 h-4 text-brand-500" />}
                                         {isPdf ? 'Documento PDF' : 'Imagen Adjunta'}
-                                      </a>
+                                      </button>
                                     );
                                   })}
                                 </div>

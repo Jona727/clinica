@@ -1,4 +1,6 @@
 import { Request, Response } from 'express';
+import path from 'path';
+import fs from 'fs';
 import { prisma } from '../lib/prisma';
 
 export const getHistorialPaciente = async (req: Request, res: Response) => {
@@ -82,6 +84,46 @@ export const createEvolucion = async (req: Request, res: Response) => {
     res.status(201).json(evolucion);
   } catch (error) {
     res.status(500).json({ message: 'Error al crear evolución clínica' });
+  }
+};
+
+export const getAdjunto = async (req: Request, res: Response) => {
+  try {
+    const { filename } = req.params;
+    const { rol, profesionalId, centroMedicoId } = req.user!;
+
+    // Regla de Negocio: Recepción no tiene acceso a adjuntos de historias clínicas
+    if (rol === 'RECEPCION') {
+      return res.status(403).json({ message: 'Acceso denegado: Confidencialidad médica' });
+    }
+
+    const rutaRelativa = `/uploads/${filename}`;
+    const evolucion = await prisma.evolucionClinica.findFirst({
+      where: {
+        adjuntos: { has: rutaRelativa },
+        paciente: { centroMedicoId }
+      }
+    });
+
+    if (!evolucion) {
+      return res.status(404).json({ message: 'Archivo no encontrado' });
+    }
+
+    // Mismo criterio de confidencialidad que al listar el historial
+    if (rol === 'PROFESIONAL' && evolucion.esConfidencial && evolucion.profesionalId !== profesionalId) {
+      return res.status(403).json({ message: 'No autorizado para ver este archivo' });
+    }
+
+    const nombreSeguro = path.basename(filename);
+    const rutaArchivo = path.join(process.cwd(), 'uploads', nombreSeguro);
+
+    if (!fs.existsSync(rutaArchivo)) {
+      return res.status(404).json({ message: 'Archivo no encontrado en el servidor' });
+    }
+
+    res.sendFile(rutaArchivo);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener el archivo' });
   }
 };
 
