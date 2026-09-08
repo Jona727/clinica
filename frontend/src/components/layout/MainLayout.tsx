@@ -1,5 +1,5 @@
 import { Outlet, Navigate, Link } from 'react-router-dom';
-import { Calendar, Users, FileText, CreditCard, LogOut, UserCog } from 'lucide-react';
+import { Calendar, Users, FileText, CreditCard, LogOut, UserCog, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 const ROLES_LABEL: Record<string, string> = {
@@ -57,10 +57,16 @@ export const MainLayout = () => {
             <span className="font-medium">Pagos y Caja</span>
           </Link>
           {usuario?.rol === 'ADMIN' && (
-            <Link to="/usuarios" className="flex items-center gap-3 px-4 py-3 text-warm-700 hover:bg-warm-100 hover:text-warm-900 rounded-xl transition-all">
-              <UserCog className="w-5 h-5" />
-              <span className="font-medium">Equipo</span>
-            </Link>
+            <>
+              <Link to="/usuarios" className="flex items-center gap-3 px-4 py-3 text-warm-700 hover:bg-warm-100 hover:text-warm-900 rounded-xl transition-all">
+                <UserCog className="w-5 h-5" />
+                <span className="font-medium">Equipo</span>
+              </Link>
+              <Link to="/auditoria" className="flex items-center gap-3 px-4 py-3 text-warm-700 hover:bg-warm-100 hover:text-warm-900 rounded-xl transition-all">
+                <ShieldCheck className="w-5 h-5" />
+                <span className="font-medium">Auditoría</span>
+              </Link>
+            </>
           )}
         </nav>
         <div className="p-4 border-t border-warm-100">

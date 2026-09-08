@@ -1,6 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../lib/prisma';
 
+// Nunca debe quedar una contraseña en texto plano en el registro de auditoría
+const CAMPOS_SENSIBLES = ['password', 'nuevaPassword', 'passwordHash', 'sudoPassword'];
+
+const ocultarCamposSensibles = (body: any) => {
+  if (!body || typeof body !== 'object') return body;
+  const copia: any = { ...body };
+  for (const campo of CAMPOS_SENSIBLES) {
+    if (campo in copia) copia[campo] = '[OCULTO]';
+  }
+  return copia;
+};
+
 export const auditMiddleware = (entidad: string, accion: string) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     // Interceptamos la respuesta para loguear solo si fue exitosa (200-299)
@@ -14,7 +26,7 @@ export const auditMiddleware = (entidad: string, accion: string) => {
         
         try {
            if (req.method !== 'GET') {
-               detalles = JSON.stringify(req.body);
+               detalles = JSON.stringify(ocultarCamposSensibles(req.body));
            }
         } catch(e) {}
 

@@ -4,6 +4,7 @@ import { getUsuarios, createUsuario, updateUsuario, toggleEstadoUsuario } from '
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { rbacMiddleware } from '../middlewares/rbac.middleware';
 import { sudoMiddleware } from '../middlewares/sudo.middleware';
+import { auditMiddleware } from '../middlewares/audit.middleware';
 
 const router = Router();
 
@@ -13,8 +14,8 @@ router.use(authMiddleware);
 const soloAdmin = rbacMiddleware([RolUsuario.ADMIN]);
 
 router.get('/', soloAdmin, getUsuarios);
-router.post('/', soloAdmin, createUsuario);
-router.put('/:id', soloAdmin, updateUsuario);
-router.patch('/:id/estado', soloAdmin, sudoMiddleware, toggleEstadoUsuario);
+router.post('/', soloAdmin, auditMiddleware('Usuario', 'Crear usuario del equipo'), createUsuario);
+router.put('/:id', soloAdmin, auditMiddleware('Usuario', 'Editar usuario del equipo'), updateUsuario);
+router.patch('/:id/estado', soloAdmin, sudoMiddleware, auditMiddleware('Usuario', 'Activar/desactivar usuario'), toggleEstadoUsuario);
 
 export default router;

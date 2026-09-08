@@ -8,6 +8,7 @@ import { HistoriasClinicas } from './pages/HistoriasClinicas';
 import { Pagos } from './pages/Pagos';
 import { Turnos } from './pages/Turnos';
 import { Usuarios } from './pages/Usuarios';
+import { Auditoria } from './pages/Auditoria';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/historias-clinicas" element={<HistoriasClinicas />} />
           <Route path="/pagos" element={<Pagos />} />
           <Route path="/usuarios" element={<Usuarios />} />
+          <Route path="/auditoria" element={<Auditoria />} />
           {/* Futuras rutas irán aquí */}
         </Route>
       </Routes>
