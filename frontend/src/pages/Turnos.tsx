@@ -1,4 +1,5 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -9,14 +10,22 @@ import { useNavigate } from 'react-router-dom';
 import { useTurnos } from '../hooks/useTurnos';
 import { usePacientes } from '../hooks/usePacientes';
 import { promptSudo } from '../utils/sudoPrompt';
+import api from '../services/api';
 
 export const Turnos = () => {
   const navigate = useNavigate();
   const calendarRef = useRef<FullCalendar>(null);
   const [currentView, setCurrentView] = useState('timeGridWeek');
-  
+  const [rangeLabel, setRangeLabel] = useState('');
+
   const { turnos, isLoading, createTurno, updateTurno, deleteTurno, updateEstadoTurno } = useTurnos();
   const { pacientes } = usePacientes();
+
+  const { data: miPerfil } = useQuery({
+    queryKey: ['auth', 'me'],
+    queryFn: async () => (await api.get('/auth/me')).data,
+  });
+  const duracionTurnoMin = miPerfil?.profesional?.duracionTurnoMin || 45;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'view' | 'edit'>('create');
@@ -68,7 +77,7 @@ export const Turnos = () => {
     setModalMode('create');
     setErrorMsg('');
     const startDate = new Date(arg.date);
-    const endDate = new Date(startDate.getTime() + 45 * 60000); 
+    const endDate = new Date(startDate.getTime() + duracionTurnoMin * 60000);
 
     setFormData({
       pacienteId: '',
@@ -114,7 +123,7 @@ export const Turnos = () => {
   const handleEventDrop = async (arg: any) => {
     const turnoId = arg.event.id;
     const newStart = arg.event.start;
-    const newEnd = arg.event.end || new Date(newStart.getTime() + 45 * 60000);
+    const newEnd = arg.event.end || new Date(newStart.getTime() + duracionTurnoMin * 60000);
     try {
       await updateTurno({
         id: turnoId,
@@ -133,7 +142,7 @@ export const Turnos = () => {
     setErrorMsg('');
     try {
       const startDate = new Date(`${formData.fechaInicio}T${formData.horaInicio}`);
-      const endDate = new Date(startDate.getTime() + 60 * 60000); 
+      const endDate = new Date(startDate.getTime() + duracionTurnoMin * 60000);
 
       const payload = {
         pacienteId: formData.pacienteId,
@@ -215,9 +224,21 @@ export const Turnos = () => {
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 shrink-0 gap-4">
         <div>
            <h2 className="text-3xl font-serif font-bold text-warm-900">Mi Agenda</h2>
-           <p className="text-warm-500 text-sm mt-1">Gestión de turnos y pacientes</p>
+           <p className="text-warm-500 text-sm mt-1 capitalize">{rangeLabel || 'Gestión de turnos y pacientes'}</p>
         </div>
-        
+
+        <div className="flex items-center gap-2 bg-white p-1.5 rounded-full shadow-sm border border-warm-100">
+          <button onClick={handlePrev} title="Anterior" className="p-2 rounded-full text-warm-600 hover:bg-warm-50 transition-all">
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button onClick={handleToday} className="px-4 py-2 rounded-full text-sm font-bold text-warm-600 hover:bg-warm-50 transition-all">
+            Hoy
+          </button>
+          <button onClick={handleNext} title="Siguiente" className="p-2 rounded-full text-warm-600 hover:bg-warm-50 transition-all">
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
         <div className="flex items-center gap-4 bg-white p-1.5 rounded-full shadow-sm border border-warm-100">
           <button onClick={() => changeView('timeGridDay')} className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${currentView === 'timeGridDay' ? 'bg-warm-900 text-white shadow-md' : 'text-warm-600 hover:bg-warm-50'}`}>Diario</button>
           <button onClick={() => changeView('timeGridWeek')} className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${currentView === 'timeGridWeek' ? 'bg-warm-900 text-white shadow-md' : 'text-warm-600 hover:bg-warm-50'}`}>Semanal</button>
@@ -249,6 +270,7 @@ export const Turnos = () => {
             eventDrop={handleEventDrop}
             dateClick={handleDateClick}
             eventClick={handleEventClick}
+            datesSet={(arg) => setRangeLabel(arg.view.title)}
             slotMinTime="08:00:00"
             slotMaxTime="20:00:00"
             allDaySlot={false}
