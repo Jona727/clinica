@@ -12,9 +12,7 @@ export const useAuth = () => {
     },
     onSuccess: (data) => {
       localStorage.setItem('token', data.token);
-      
-      // Podríamos guardar info del usuario en context/state si lo requerimos
-      // localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('user', JSON.stringify(data.usuario));
 
       navigate('/turnos');
     },

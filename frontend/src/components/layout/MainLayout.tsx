@@ -1,18 +1,31 @@
-import { Outlet, Navigate, Link, useNavigate } from 'react-router-dom';
+import { Outlet, Navigate, Link } from 'react-router-dom';
 import { Calendar, Users, FileText, CreditCard, LogOut } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
+
+const ROLES_LABEL: Record<string, string> = {
+  ADMIN: 'Administrador/a',
+  PROFESIONAL: 'Profesional',
+  RECEPCION: 'Recepción',
+};
 
 export const MainLayout = () => {
   const token = localStorage.getItem('token');
-  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
-  };
+  const usuario = JSON.parse(localStorage.getItem('user') || 'null');
+  const nombre = usuario?.nombre || 'Usuario';
+  const rolLabel = ROLES_LABEL[usuario?.rol] || usuario?.rol || '';
+  const iniciales = nombre
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((palabra: string) => palabra[0])
+    .join('')
+    .toUpperCase();
 
   return (
     <div className="min-h-screen bg-warm-50 flex font-sans">
@@ -45,8 +58,8 @@ export const MainLayout = () => {
           </Link>
         </nav>
         <div className="p-4 border-t border-warm-100">
-          <button 
-            onClick={handleLogout}
+          <button
+            onClick={logout}
             className="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 w-full rounded-xl transition-all"
           >
             <LogOut className="w-5 h-5" />
@@ -60,11 +73,11 @@ export const MainLayout = () => {
         <header className="bg-white px-8 py-4 border-b border-warm-200 flex justify-end shadow-sm">
            <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-warm-200 flex items-center justify-center text-warm-700 font-bold">
-                 SC
+                 {iniciales || '?'}
               </div>
               <div>
-                <p className="text-sm font-bold text-warm-900">Lic. Chajud Sheila</p>
-                <p className="text-xs text-warm-500">Psicóloga</p>
+                <p className="text-sm font-bold text-warm-900">{nombre}</p>
+                <p className="text-xs text-warm-500">{rolLabel}</p>
               </div>
            </div>
         </header>
