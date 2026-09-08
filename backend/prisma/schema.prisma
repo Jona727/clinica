@@ -57,6 +57,8 @@ model Usuario {
   passwordHash    String
   rol             RolUsuario     @default(PROFESIONAL)
   activo          Boolean        @default(true)
+  nombre          String?
+  apellido        String?
   profesional     Profesional?
   auditorias      AuditoriaLog[]
   createdAt       DateTime       @default(now())

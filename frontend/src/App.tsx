@@ -7,6 +7,7 @@ import { Pacientes } from './pages/Pacientes';
 import { HistoriasClinicas } from './pages/HistoriasClinicas';
 import { Pagos } from './pages/Pagos';
 import { Turnos } from './pages/Turnos';
+import { Usuarios } from './pages/Usuarios';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/pacientes" element={<Pacientes />} />
           <Route path="/historias-clinicas" element={<HistoriasClinicas />} />
           <Route path="/pagos" element={<Pagos />} />
+          <Route path="/usuarios" element={<Usuarios />} />
           {/* Futuras rutas irán aquí */}
         </Route>
       </Routes>

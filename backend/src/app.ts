@@ -26,6 +26,7 @@ import profesionalesRoutes from './routes/profesionales.routes';
 import turnosRoutes from './routes/turnos.routes';
 import hcRoutes from './routes/historiasClinicas.routes';
 import pagosRoutes from './routes/pagos.routes';
+import usuariosRoutes from './routes/usuarios.routes';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/pacientes', pacientesRoutes);
@@ -33,5 +34,6 @@ app.use('/api/profesionales', profesionalesRoutes);
 app.use('/api/turnos', turnosRoutes);
 app.use('/api/historias-clinicas', hcRoutes);
 app.use('/api/pagos', pagosRoutes);
+app.use('/api/usuarios', usuariosRoutes);
 
 export default app;

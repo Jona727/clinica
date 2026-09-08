@@ -3,6 +3,18 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
 
+type UsuarioConNombre = {
+  nombre?: string | null;
+  apellido?: string | null;
+  profesional?: { nombre: string; apellido: string } | null;
+};
+
+const nombreParaMostrar = (usuario: UsuarioConNombre) => {
+  if (usuario.profesional) return `${usuario.profesional.nombre} ${usuario.profesional.apellido}`;
+  if (usuario.nombre) return `${usuario.nombre} ${usuario.apellido || ''}`.trim();
+  return 'Admin/Recepción';
+};
+
 export const login = async (req: Request, res: Response) => {
   try {
     const { username, password } = req.body;
@@ -36,7 +48,7 @@ export const login = async (req: Request, res: Response) => {
         id: usuario.id,
         email: usuario.email,
         rol: usuario.rol,
-        nombre: usuario.profesional ? `${usuario.profesional.nombre} ${usuario.profesional.apellido}` : 'Admin/Recepción'
+        nombre: nombreParaMostrar(usuario)
       }
     });
   } catch (error) {
@@ -63,6 +75,7 @@ export const me = async (req: Request, res: Response) => {
       id: usuario.id,
       email: usuario.email,
       rol: usuario.rol,
+      nombre: nombreParaMostrar(usuario),
       centroMedico: usuario.centroMedico.nombre,
       profesional: usuario.profesional
     });
