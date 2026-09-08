@@ -78,35 +78,43 @@ Por defecto el frontend corre en `http://localhost:5173` y espera a la API en `h
 
 ## Despliegue en producción
 
-Se despliega en **Render** (corre tanto el backend en Node.js como el frontend) + **Neon** (base de datos PostgreSQL). Los dos tienen plan gratis permanente y no piden tarjeta. Se descartó InfinityFree porque ese hosting solo sirve PHP + MySQL — no puede ejecutar un backend en Node.js.
+Hay dos caminos armados en el repo. **Se descartó InfinityFree y el hosting compartido básico de Hostinger**: ninguno de los dos ejecuta Node.js, solo sirven PHP/HTML estático.
 
-El repo incluye `render.yaml`: un "Blueprint" que le dice a Render cómo levantar el backend y el frontend juntos, con un solo clic.
+### Opción A: VPS propio con Docker (recomendado)
 
-### Primera vez: crear todo
+Todo el proyecto (backend, base de datos y frontend) corre junto en un mismo servidor, con `docker-compose.yml`. Sin límites de tiempo de inactividad, con disco persistente de verdad (los adjuntos de Historias Clínicas no se pierden).
 
-1. **Base de datos en Neon:**
-   - Crear cuenta gratis en [neon.com](https://neon.com) (no pide tarjeta).
-   - Crear un proyecto nuevo. Copiar la *connection string* que te da (empieza con `postgresql://...`).
+**Qué VPS elegir** (precios de referencia, confirmar al momento de contratar):
+- **Hetzner Cloud** — la mejor relación precio/recursos del mercado, desde ~€5.49/mes (CX23: 2 vCPU, 4GB RAM). Es la opción más económica para lo que este proyecto necesita.
+- **Hostinger VPS** — si preferís mantener todo en una sola cuenta/facturación ya que sos cliente de Hostinger. Sus planes de VPS (no confundir con el hosting compartido) sí corren Node.js sin restricciones.
+- **DigitalOcean** — desde $4/mes, muy buena documentación y tutoriales para quien recién empieza con VPS.
 
-2. **Backend + Frontend en Render:**
-   - Crear cuenta gratis en [render.com](https://render.com) (no pide tarjeta).
-   - *New → Blueprint*, conectar este repositorio de GitHub. Render lee `render.yaml` y propone crear los dos servicios (`emuna-clinica-backend` y `emuna-clinica-frontend`).
-   - Antes de confirmar, en el servicio `emuna-clinica-backend` cargar la variable `DATABASE_URL` con la connection string de Neon del paso 1 (el resto de las variables —`JWT_SECRET`, `PORT`— las completa Render solo).
-   - Confirmar y esperar a que terminen los dos despliegues.
+Cualquiera alcanza de sobra para el uso de un consultorio: el plan más chico de cualquiera de los tres sirve.
 
-3. **Cargar los datos iniciales (una sola vez):** desde la pestaña *Shell* del servicio `emuna-clinica-backend` en Render, correr:
-   ```bash
-   npx tsx prisma/seed.ts
-   ```
-   Esto crea el centro médico y el usuario administrador de prueba (ver credenciales más arriba). **No lo corras de nuevo** en despliegues futuros — fallaría porque esos datos ya existen (no hace falta: `render.yaml` solo corre `prisma migrate deploy`, que sí es seguro correr en cada deploy).
+**Primera vez, en el VPS (Ubuntu):**
 
-4. **Revisar la URL real del backend:** Render arma la URL como `https://<nombre-del-servicio>.onrender.com`, pero si ese nombre ya lo usa otra cuenta, Render le agrega un sufijo random al tuyo. Fijate la URL real del backend en su panel de Render; si no coincide con `https://emuna-clinica-backend.onrender.com`, actualizá la variable `VITE_API_URL` del servicio `emuna-clinica-frontend` (agregándole `/api` al final) y volvé a desplegarlo.
+1. Instalar Docker: seguir la [guía oficial](https://docs.docker.com/engine/install/ubuntu/) (o el instalador rápido: `curl -fsSL https://get.docker.com | sh`).
+2. Clonar el repo: `git clone <url-del-repo> && cd clinica`.
+3. Copiar `.env.example` a `.env` en la raíz y completar `DB_PASSWORD` y `JWT_SECRET` con valores propios (`openssl rand -base64 48` genera uno bueno para el segundo).
+4. Levantar todo: `docker compose up -d --build`.
+5. Cargar los datos iniciales (**solo la primera vez**): `docker compose exec backend npx tsx prisma/seed.ts`.
+6. Apuntar el dominio/subdominio (registro DNS tipo A) a la IP del VPS. El sitio queda escuchando en el puerto 80.
 
-### Después de la primera vez
+**Después de la primera vez:** para actualizar tras un cambio en el código, en el VPS: `git pull && docker compose up -d --build`. Las migraciones de Prisma se aplican solas en cada arranque del backend.
 
-Cada push a `main` redespliega solo (Render está conectado al repo). No hace falta ningún paso manual — salvo, claro, si algún día se agrega una migración nueva de Prisma: `render.yaml` ya corre `prisma migrate deploy` en cada arranque del backend, así que se aplica sola.
+**Pendiente, no automatizado todavía:** HTTPS (certificado SSL). Con dominio propio apuntando al VPS, se agrega fácil con [Certbot](https://certbot.eff.org/) corriendo delante de Nginx — avisame cuando llegues a ese paso y lo dejamos armado.
 
-### Limitaciones a tener en cuenta (plan gratis)
+Se probó localmente el `docker-compose.yml` completo (los tres contenedores levantados juntos, con login, migraciones automáticas y el proxy de Nginx hacia la API) antes de dejarlo documentado acá.
 
-- **Se "duermen" con la inactividad:** tanto el backend de Render como la base de Neon entran en reposo si nadie los usa por un rato. La primera carga después de estar inactivo puede tardar 30-50 segundos en responder mientras "despiertan". Es normal, no es un error.
-- **El disco del backend en Render no es permanente:** los archivos que hoy se guardan en `backend/uploads/` (los adjuntos de Historias Clínicas) se pierden en cada redeploy o reinicio, porque el plan gratis no incluye disco persistente. Todavía no está resuelto — antes de depender de esta función en producción, hay que cambiar dónde se guardan esos archivos (por ejemplo, directo en la base de datos, o en un servicio de almacenamiento aparte).
+### Opción B: Render (backend + frontend) + Neon (base de datos) — gratis, sin VPS
+
+Alternativa sin costo si preferís no administrar un servidor. El repo incluye `render.yaml` (Blueprint de Render) para levantar los dos servicios con un clic.
+
+1. **Base de datos en Neon:** cuenta gratis en [neon.com](https://neon.com) (sin tarjeta), crear un proyecto, copiar la *connection string*.
+2. **Backend + Frontend en Render:** cuenta gratis en [render.com](https://render.com) (sin tarjeta), *New → Blueprint*, conectar el repo. Antes de confirmar, cargar `DATABASE_URL` en el servicio `emuna-clinica-backend` con la connection string de Neon.
+3. Cargar los datos iniciales una sola vez desde la *Shell* del servicio backend en Render: `npx tsx prisma/seed.ts`.
+4. Revisar la URL real que Render le asignó al backend (puede llevar un sufijo si el nombre ya estaba tomado) y, si no coincide con lo que espera `render.yaml`, actualizar `VITE_API_URL` en el servicio frontend.
+
+Después del primer despliegue, cada push a `main` redespliega solo.
+
+**Limitaciones del plan gratis:** tanto Render como Neon "duermen" con la inactividad (la primera carga después de un rato sin uso tarda 30-50 segundos en responder), y el disco del backend en Render **no es persistente** — los adjuntos de Historias Clínicas se perderían en cada redeploy. La Opción A (VPS) no tiene ninguna de estas dos limitaciones.
