@@ -5,7 +5,7 @@ import { prisma } from '../lib/prisma';
 
 export const getHistorialPaciente = async (req: Request, res: Response) => {
   try {
-    const { pacienteId } = req.params;
+    const { pacienteId } = req.params as { pacienteId: string };
     const { rol, profesionalId } = req.user!;
 
     // Regla de Negocio: Recepción no puede ver historias clínicas
@@ -89,7 +89,7 @@ export const createEvolucion = async (req: Request, res: Response) => {
 
 export const getAdjunto = async (req: Request, res: Response) => {
   try {
-    const { filename } = req.params;
+    const { filename } = req.params as { filename: string };
     const { rol, profesionalId, centroMedicoId } = req.user!;
 
     // Regla de Negocio: Recepción no tiene acceso a adjuntos de historias clínicas
@@ -129,7 +129,7 @@ export const getAdjunto = async (req: Request, res: Response) => {
 
 export const firmarEvolucion = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const profesionalId = req.user?.profesionalId;
 
     const evolucion = await prisma.evolucionClinica.findUnique({ where: { id } });

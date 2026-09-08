@@ -27,7 +27,7 @@ export const getProfesionales = async (req: Request, res: Response) => {
 
 export const getProfesionalById = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const centroMedicoId = req.user?.centroMedicoId;
 
     const profesional = await prisma.profesional.findFirst({
@@ -52,7 +52,7 @@ export const getProfesionalById = async (req: Request, res: Response) => {
 
 export const updateDisponibilidad = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const { disponibilidades } = req.body; // Array de { diaSemana, horaInicio, horaFin }
 
     // Validar acceso: Solo ADMIN o el propio profesional pueden modificar esto

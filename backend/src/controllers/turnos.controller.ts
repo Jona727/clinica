@@ -137,7 +137,7 @@ export const createTurno = async (req: Request, res: Response) => {
 
 export const updateEstadoTurno = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const { estado } = req.body; // EstadoTurno
     const sudoPassword = req.headers['x-sudo-password'] as string;
 
@@ -174,7 +174,7 @@ export const updateEstadoTurno = async (req: Request, res: Response) => {
 
 export const updateTurno = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const { fechaHoraInicio, fechaHoraFin, esSobreturno, motivoConsulta } = req.body;
 
     const turnoExistente = await prisma.turno.findUnique({ where: { id } });
@@ -241,7 +241,7 @@ export const updateTurno = async (req: Request, res: Response) => {
 
 export const deleteTurno = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const sudoPassword = req.headers['x-sudo-password'] as string;
 
     const turnoExistente = await prisma.turno.findUnique({ where: { id } });

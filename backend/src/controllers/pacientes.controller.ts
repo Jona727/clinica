@@ -28,7 +28,7 @@ export const getPacientes = async (req: Request, res: Response) => {
 
 export const getPacienteById = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const paciente = await prisma.paciente.findUnique({
       where: { id },
       include: {
@@ -78,7 +78,7 @@ export const createPaciente = async (req: Request, res: Response) => {
 
 export const updatePaciente = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const pacienteData = req.body;
     const centroMedicoId = req.user?.centroMedicoId!;
 
@@ -105,7 +105,7 @@ export const updatePaciente = async (req: Request, res: Response) => {
 
 export const deletePaciente = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     await prisma.paciente.delete({
       where: { id }
     });

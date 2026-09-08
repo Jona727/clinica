@@ -107,7 +107,7 @@ export const createUsuario = async (req: Request, res: Response) => {
 
 export const updateUsuario = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const centroMedicoId = req.user?.centroMedicoId;
     const { email, nombre, apellido, especialidad, matricula, duracionTurnoMin, porcentajeComision, nuevaPassword } = req.body;
 
@@ -160,7 +160,7 @@ export const updateUsuario = async (req: Request, res: Response) => {
 
 export const toggleEstadoUsuario = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const centroMedicoId = req.user?.centroMedicoId;
 
     if (id === req.user?.usuarioId) {
