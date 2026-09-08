@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Archivos subidos por usuarios (adjuntos de historias clínicas, etc.)
+backend/uploads/
