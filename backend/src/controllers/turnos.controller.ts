@@ -3,6 +3,38 @@ import { prisma } from '../lib/prisma';
 import { EstadoTurno } from '@prisma/client';
 import { verifySudoPassword } from '../middlewares/sudo.middleware';
 
+const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+
+// Devuelve un mensaje de error si el turno cae fuera de la disponibilidad horaria
+// configurada por el profesional. Si el profesional todavía no configuró ninguna
+// disponibilidad, no se restringe (evita bloquear a quien recién se suma al equipo).
+const validarDisponibilidadHoraria = async (profesionalId: string, inicio: Date, fin: Date) => {
+  const disponibilidades = await prisma.disponibilidadHoraria.findMany({ where: { profesionalId } });
+  if (disponibilidades.length === 0) return null;
+
+  const diaSemana = inicio.getDay();
+  const minutosInicio = inicio.getHours() * 60 + inicio.getMinutes();
+  const minutosFin = fin.getHours() * 60 + fin.getMinutes();
+
+  const disponibilidadDelDia = disponibilidades.filter(d => d.diaSemana === diaSemana);
+  if (disponibilidadDelDia.length === 0) {
+    return `Fuera de horario: no hay atención configurada los días ${DIAS[diaSemana]}.`;
+  }
+
+  const cabeEnAlgunBloque = disponibilidadDelDia.some(d => {
+    const [hI, mI] = d.horaInicio.split(':').map(Number);
+    const [hF, mF] = d.horaFin.split(':').map(Number);
+    return minutosInicio >= hI * 60 + mI && minutosFin <= hF * 60 + mF;
+  });
+
+  if (!cabeEnAlgunBloque) {
+    const horarios = disponibilidadDelDia.map(d => `${d.horaInicio} a ${d.horaFin}`).join(', ');
+    return `Fuera de horario: los días ${DIAS[diaSemana]} se atiende de ${horarios}.`;
+  }
+
+  return null;
+};
+
 export const getTurnos = async (req: Request, res: Response) => {
   try {
     const { profesionalId, fechaInicio, fechaFin } = req.query;
@@ -59,7 +91,15 @@ export const createTurno = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'La hora de finalización debe ser estrictamente posterior a la hora de inicio.' });
     }
 
-    // 3. Control Exhaustivo: Validar Solapamientos
+    // 3. Control Exhaustivo: Respetar la disponibilidad horaria del profesional
+    if (!esSobreturno) {
+      const errorDisponibilidad = await validarDisponibilidadHoraria(profesionalId, inicio, fin);
+      if (errorDisponibilidad) {
+        return res.status(400).json({ message: errorDisponibilidad });
+      }
+    }
+
+    // 4. Control Exhaustivo: Validar Solapamientos
     if (!esSobreturno) {
       const solapamiento = await prisma.turno.findFirst({
         where: {
@@ -157,9 +197,14 @@ export const updateTurno = async (req: Request, res: Response) => {
       }
     }
 
-    // 3. Control Exhaustivo: Validar Solapamientos (Ignorando a sí mismo)
+    // 3. Control Exhaustivo: Respetar la disponibilidad horaria y validar Solapamientos (ignorando a sí mismo)
     const evaluarSobreturno = esSobreturno !== undefined ? esSobreturno : turnoExistente.esSobreturno;
     if (!evaluarSobreturno) {
+      const errorDisponibilidad = await validarDisponibilidadHoraria(turnoExistente.profesionalId, inicio, fin);
+      if (errorDisponibilidad) {
+        return res.status(400).json({ message: errorDisponibilidad });
+      }
+
       const solapamiento = await prisma.turno.findFirst({
         where: {
           profesionalId: turnoExistente.profesionalId,

@@ -23,6 +23,9 @@ const usuarioSelect = {
       matricula: true,
       duracionTurnoMin: true,
       porcentajeComision: true,
+      disponibilidades: {
+        select: { id: true, diaSemana: true, horaInicio: true, horaFin: true },
+      },
     },
   },
 } satisfies Prisma.UsuarioSelect;

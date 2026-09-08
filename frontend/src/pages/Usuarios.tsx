@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { UserPlus, FileEdit, Power, X } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { UserPlus, FileEdit, Power, X, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useUsuarios } from '../hooks/useUsuarios';
 import { promptSudo } from '../utils/sudoPrompt';
+import api from '../services/api';
 
 const ROLES_LABEL: Record<string, string> = {
   ADMIN: 'Administrador/a',
@@ -16,14 +18,25 @@ const FORM_INICIAL = {
   duracionTurnoMin: '45', porcentajeComision: '100', nuevaPassword: '',
 };
 
+const DIAS_SEMANA = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+type DiaHorario = { activo: boolean; horaInicio: string; horaFin: string };
+
+const horariosVacios = (): DiaHorario[] =>
+  Array.from({ length: 7 }, () => ({ activo: false, horaInicio: '09:00', horaFin: '18:00' }));
+
 export const Usuarios = () => {
   const { usuarios, isLoading, error, createUsuario, updateUsuario, toggleEstadoUsuario } = useUsuarios();
+  const queryClient = useQueryClient();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedProfesionalId, setSelectedProfesionalId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [formData, setFormData] = useState(FORM_INICIAL);
+  const [horarios, setHorarios] = useState<DiaHorario[]>(horariosVacios());
+  const [isSavingHorarios, setIsSavingHorarios] = useState(false);
 
   const openCreateModal = () => {
     setModalMode('create');
@@ -36,6 +49,7 @@ export const Usuarios = () => {
   const openEditModal = (u: any) => {
     setModalMode('edit');
     setSelectedId(u.id);
+    setSelectedProfesionalId(u.profesional?.id || null);
     setFormData({
       username: u.username, password: '', email: u.email || '', rol: u.rol,
       nombre: u.profesional?.nombre || u.nombre || '', apellido: u.profesional?.apellido || u.apellido || '',
@@ -44,8 +58,34 @@ export const Usuarios = () => {
       porcentajeComision: String(u.profesional?.porcentajeComision ?? 100),
       nuevaPassword: '',
     });
+
+    const base = horariosVacios();
+    (u.profesional?.disponibilidades || []).forEach((d: any) => {
+      base[d.diaSemana] = { activo: true, horaInicio: d.horaInicio, horaFin: d.horaFin };
+    });
+    setHorarios(base);
+
     setErrorMsg('');
     setIsModalOpen(true);
+  };
+
+  const guardarHorarios = async () => {
+    if (!selectedProfesionalId) return;
+    setIsSavingHorarios(true);
+    try {
+      const disponibilidades = horarios
+        .map((h, diaSemana) => ({ diaSemana, ...h }))
+        .filter(h => h.activo)
+        .map(({ diaSemana, horaInicio, horaFin }) => ({ diaSemana, horaInicio, horaFin }));
+
+      await api.put(`/profesionales/${selectedProfesionalId}/disponibilidad`, { disponibilidades });
+      toast.success('Horarios de atención actualizados');
+      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Error al guardar los horarios');
+    } finally {
+      setIsSavingHorarios(false);
+    }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -98,6 +138,12 @@ export const Usuarios = () => {
     }
   };
 
+  // Al editar, un ADMIN con perfil de profesional vinculado (caso típico: la
+  // única profesional del centro también es la administradora) también debe
+  // poder tocar sus datos profesionales y horarios, aunque su rol de usuario
+  // no sea literalmente "PROFESIONAL".
+  const mostrarDatosProfesional = formData.rol === 'PROFESIONAL' || (modalMode === 'edit' && !!selectedProfesionalId);
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500 relative">
 
@@ -145,15 +191,13 @@ export const Usuarios = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right space-x-1">
+                    <button onClick={() => openEditModal(u)} className="p-2 text-gray-400 hover:text-warm-600 hover:bg-warm-50 rounded-lg transition-colors" title="Editar Usuario">
+                      <FileEdit className="w-5 h-5" />
+                    </button>
                     {u.rol !== 'ADMIN' && (
-                      <>
-                        <button onClick={() => openEditModal(u)} className="p-2 text-gray-400 hover:text-warm-600 hover:bg-warm-50 rounded-lg transition-colors" title="Editar Usuario">
-                          <FileEdit className="w-5 h-5" />
-                        </button>
-                        <button onClick={() => handleToggleEstado(u)} className={`p-2 rounded-lg transition-colors ${u.activo ? 'text-gray-400 hover:text-red-600 hover:bg-red-50' : 'text-gray-400 hover:text-green-600 hover:bg-green-50'}`} title={u.activo ? 'Desactivar' : 'Activar'}>
-                          <Power className="w-5 h-5" />
-                        </button>
-                      </>
+                      <button onClick={() => handleToggleEstado(u)} className={`p-2 rounded-lg transition-colors ${u.activo ? 'text-gray-400 hover:text-red-600 hover:bg-red-50' : 'text-gray-400 hover:text-green-600 hover:bg-green-50'}`} title={u.activo ? 'Desactivar' : 'Activar'}>
+                        <Power className="w-5 h-5" />
+                      </button>
                     )}
                   </td>
                 </tr>
@@ -223,7 +267,7 @@ export const Usuarios = () => {
                   )}
                 </div>
 
-                {formData.rol === 'PROFESIONAL' && (
+                {mostrarDatosProfesional && (
                   <div className="bg-warm-50 p-4 rounded-xl border border-warm-100 space-y-4">
                     <h4 className="font-bold text-warm-900 text-sm">Datos Profesionales</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -244,6 +288,38 @@ export const Usuarios = () => {
                         <input type="number" min={0} max={100} className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg outline-none" value={formData.porcentajeComision} onChange={e => setFormData({ ...formData, porcentajeComision: e.target.value })} />
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {modalMode === 'edit' && mostrarDatosProfesional && selectedProfesionalId && (
+                  <div className="bg-warm-50 p-4 rounded-xl border border-warm-100 space-y-3">
+                    <h4 className="font-bold text-warm-900 text-sm flex items-center gap-2"><Clock className="w-4 h-4" /> Horarios de Atención</h4>
+                    <p className="text-xs text-gray-500">Los turnos solo se van a poder agendar dentro de estos horarios (salvo que se marquen como sobreturno).</p>
+                    <div className="space-y-2">
+                      {DIAS_SEMANA.map((dia, i) => (
+                        <div key={dia} className="flex items-center gap-3 bg-white p-2.5 rounded-lg border border-gray-200">
+                          <label className="flex items-center gap-2 w-32 shrink-0 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={horarios[i].activo}
+                              onChange={e => setHorarios(prev => prev.map((h, idx) => idx === i ? { ...h, activo: e.target.checked } : h))}
+                              className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
+                            />
+                            <span className="text-sm font-semibold text-gray-700">{dia}</span>
+                          </label>
+                          {horarios[i].activo && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <input type="time" value={horarios[i].horaInicio} onChange={e => setHorarios(prev => prev.map((h, idx) => idx === i ? { ...h, horaInicio: e.target.value } : h))} className="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg outline-none" />
+                              <span className="text-gray-400">a</span>
+                              <input type="time" value={horarios[i].horaFin} onChange={e => setHorarios(prev => prev.map((h, idx) => idx === i ? { ...h, horaFin: e.target.value } : h))} className="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg outline-none" />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <button type="button" onClick={guardarHorarios} disabled={isSavingHorarios} className="w-full bg-warm-700 hover:bg-warm-800 disabled:opacity-50 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all">
+                      {isSavingHorarios ? 'Guardando...' : 'Guardar Horarios'}
+                    </button>
                   </div>
                 )}
               </div>
