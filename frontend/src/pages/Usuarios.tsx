@@ -149,54 +149,54 @@ export const Usuarios = () => {
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-serif font-bold text-warm-900">Equipo del Centro</h2>
-          <p className="text-warm-600 mt-1">Gestiona los profesionales y el personal de recepción con acceso al sistema.</p>
+          <p className="eyebrow">{usuarios.length} en el equipo</p>
+          <h2 className="font-serif text-3xl text-warm-900 mt-1">Equipo del Centro</h2>
         </div>
-        <button onClick={openCreateModal} className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md transition-all flex items-center gap-2">
-          <UserPlus className="w-5 h-5" /> Nuevo Usuario
+        <button onClick={openCreateModal} className="btn-primary">
+          <UserPlus className="w-4 h-4" /> Nuevo Usuario
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-warm-200 overflow-hidden">
+      <div className="surface overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-warm-50 text-warm-800 border-b border-warm-200 text-sm uppercase tracking-wider">
-                <th className="px-6 py-4 font-semibold">Nombre</th>
-                <th className="px-6 py-4 font-semibold">Usuario</th>
-                <th className="px-6 py-4 font-semibold">Rol</th>
-                <th className="px-6 py-4 font-semibold">Estado</th>
-                <th className="px-6 py-4 font-semibold text-right">Acciones</th>
+              <tr className="bg-warm-50/60 border-b border-warm-200/70">
+                <th className="th-editorial">Nombre</th>
+                <th className="th-editorial">Usuario</th>
+                <th className="th-editorial">Rol</th>
+                <th className="th-editorial">Estado</th>
+                <th className="th-editorial text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-warm-100">
               {isLoading ? (
-                <tr><td colSpan={5} className="text-center p-8">Cargando equipo...</td></tr>
+                <tr><td colSpan={5} className="text-center p-8 text-warm-500">Cargando equipo...</td></tr>
               ) : error ? (
                 <tr><td colSpan={5} className="text-center p-8 text-red-500">Error al cargar usuarios</td></tr>
               ) : usuarios.map((u: any) => (
                 <tr key={u.id} className="hover:bg-warm-50/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <p className="font-bold text-gray-900">{u.profesional?.nombre || u.nombre} {u.profesional?.apellido || u.apellido}</p>
-                    {u.profesional?.especialidad && <p className="text-xs text-brand-600 font-semibold">{u.profesional.especialidad}</p>}
+                  <td className="px-6 py-3.5">
+                    <p className="font-bold text-warm-900 text-sm">{u.profesional?.nombre || u.nombre} {u.profesional?.apellido || u.apellido}</p>
+                    {u.profesional?.especialidad && <p className="text-xs text-brand-700 font-semibold">{u.profesional.especialidad}</p>}
                   </td>
-                  <td className="px-6 py-4 text-gray-600">
+                  <td className="px-6 py-3.5 text-warm-600 text-sm">
                     <div>{u.username}</div>
-                    {u.email && <div className="text-xs text-gray-400">{u.email}</div>}
+                    {u.email && <div className="text-xs text-warm-400">{u.email}</div>}
                   </td>
-                  <td className="px-6 py-4 text-gray-600">{ROLES_LABEL[u.rol] || u.rol}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${u.activo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  <td className="px-6 py-3.5 text-warm-600 text-sm">{ROLES_LABEL[u.rol] || u.rol}</td>
+                  <td className="px-6 py-3.5">
+                    <span className={u.activo ? 'badge-success' : 'badge-danger'}>
                       {u.activo ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right space-x-1">
-                    <button onClick={() => openEditModal(u)} className="p-2 text-gray-400 hover:text-warm-600 hover:bg-warm-50 rounded-lg transition-colors" title="Editar Usuario">
-                      <FileEdit className="w-5 h-5" />
+                  <td className="px-6 py-3.5 text-right space-x-1">
+                    <button onClick={() => openEditModal(u)} className="p-2 text-warm-400 hover:text-warm-700 hover:bg-warm-100 rounded-lg transition-colors" title="Editar Usuario">
+                      <FileEdit className="w-4 h-4" />
                     </button>
                     {u.rol !== 'ADMIN' && (
-                      <button onClick={() => handleToggleEstado(u)} className={`p-2 rounded-lg transition-colors ${u.activo ? 'text-gray-400 hover:text-red-600 hover:bg-red-50' : 'text-gray-400 hover:text-green-600 hover:bg-green-50'}`} title={u.activo ? 'Desactivar' : 'Activar'}>
-                        <Power className="w-5 h-5" />
+                      <button onClick={() => handleToggleEstado(u)} className={`p-2 rounded-lg transition-colors ${u.activo ? 'text-warm-400 hover:text-red-600 hover:bg-red-50' : 'text-warm-400 hover:text-brand-600 hover:bg-brand-50'}`} title={u.activo ? 'Desactivar' : 'Activar'}>
+                        <Power className="w-4 h-4" />
                       </button>
                     )}
                   </td>
@@ -206,18 +206,18 @@ export const Usuarios = () => {
           </table>
         </div>
         {!isLoading && usuarios.length === 0 && (
-          <div className="p-12 text-center text-gray-500">No hay usuarios registrados.</div>
+          <div className="p-12 text-center text-warm-400 text-sm">No hay usuarios registrados.</div>
         )}
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-200 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col animate-in zoom-in-95 max-h-[90vh]">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-warm-50 shrink-0">
-              <h3 className="text-xl font-bold text-gray-900 font-serif">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-warm-900/50 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+          <div className="bg-white rounded-2xl shadow-warm-lg w-full max-w-2xl overflow-hidden flex flex-col animate-in zoom-in-95 max-h-[90vh]">
+            <div className="p-6 border-b border-warm-100 flex justify-between items-center bg-warm-50 shrink-0">
+              <h3 className="font-serif text-xl text-warm-900">
                 {modalMode === 'create' ? 'Nuevo Usuario' : 'Editar Usuario'}
               </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
+              <button onClick={() => setIsModalOpen(false)} className="text-warm-400 hover:text-warm-700"><X className="w-5 h-5" /></button>
             </div>
 
             <form onSubmit={handleFormSubmit} className="flex flex-col flex-1 overflow-hidden">
@@ -226,27 +226,27 @@ export const Usuarios = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre *</label>
-                    <input type="text" required className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none" value={formData.nombre} onChange={e => setFormData({ ...formData, nombre: e.target.value })} />
+                    <label className="field-label">Nombre *</label>
+                    <input type="text" required className="field-input" value={formData.nombre} onChange={e => setFormData({ ...formData, nombre: e.target.value })} />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Apellido *</label>
-                    <input type="text" required className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none" value={formData.apellido} onChange={e => setFormData({ ...formData, apellido: e.target.value })} />
+                    <label className="field-label">Apellido *</label>
+                    <input type="text" required className="field-input" value={formData.apellido} onChange={e => setFormData({ ...formData, apellido: e.target.value })} />
                   </div>
 
                   {modalMode === 'create' && (
                     <>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre de Usuario *</label>
-                        <input type="text" required className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} />
+                        <label className="field-label">Nombre de Usuario *</label>
+                        <input type="text" required className="field-input" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Contraseña *</label>
-                        <input type="password" required className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+                        <label className="field-label">Contraseña *</label>
+                        <input type="password" required className="field-input" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Rol *</label>
-                        <select required className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none" value={formData.rol} onChange={e => setFormData({ ...formData, rol: e.target.value })}>
+                        <label className="field-label">Rol *</label>
+                        <select required className="field-input" value={formData.rol} onChange={e => setFormData({ ...formData, rol: e.target.value })}>
                           <option value="PROFESIONAL">Profesional</option>
                           <option value="RECEPCION">Recepción</option>
                         </select>
@@ -255,37 +255,37 @@ export const Usuarios = () => {
                   )}
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
-                    <input type="email" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                    <label className="field-label">Email</label>
+                    <input type="email" className="field-input" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
                   </div>
 
                   {modalMode === 'edit' && (
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1">Nueva Contraseña</label>
-                      <input type="password" placeholder="Dejar en blanco para no cambiar" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none" value={formData.nuevaPassword} onChange={e => setFormData({ ...formData, nuevaPassword: e.target.value })} />
+                      <label className="field-label">Nueva Contraseña</label>
+                      <input type="password" placeholder="Dejar en blanco para no cambiar" className="field-input" value={formData.nuevaPassword} onChange={e => setFormData({ ...formData, nuevaPassword: e.target.value })} />
                     </div>
                   )}
                 </div>
 
                 {mostrarDatosProfesional && (
                   <div className="bg-warm-50 p-4 rounded-xl border border-warm-100 space-y-4">
-                    <h4 className="font-bold text-warm-900 text-sm">Datos Profesionales</h4>
+                    <p className="eyebrow">Datos Profesionales</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1">Especialidad *</label>
-                        <input type="text" required className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg outline-none" value={formData.especialidad} onChange={e => setFormData({ ...formData, especialidad: e.target.value })} />
+                        <label className="field-label text-xs">Especialidad *</label>
+                        <input type="text" required className="field-input bg-white" value={formData.especialidad} onChange={e => setFormData({ ...formData, especialidad: e.target.value })} />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1">Matrícula</label>
-                        <input type="text" className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg outline-none" value={formData.matricula} onChange={e => setFormData({ ...formData, matricula: e.target.value })} />
+                        <label className="field-label text-xs">Matrícula</label>
+                        <input type="text" className="field-input bg-white" value={formData.matricula} onChange={e => setFormData({ ...formData, matricula: e.target.value })} />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1">Duración del Turno (min)</label>
-                        <input type="number" min={5} step={5} className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg outline-none" value={formData.duracionTurnoMin} onChange={e => setFormData({ ...formData, duracionTurnoMin: e.target.value })} />
+                        <label className="field-label text-xs">Duración del Turno (min)</label>
+                        <input type="number" min={5} step={5} className="field-input bg-white" value={formData.duracionTurnoMin} onChange={e => setFormData({ ...formData, duracionTurnoMin: e.target.value })} />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1">Comisión (%)</label>
-                        <input type="number" min={0} max={100} className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg outline-none" value={formData.porcentajeComision} onChange={e => setFormData({ ...formData, porcentajeComision: e.target.value })} />
+                        <label className="field-label text-xs">Comisión (%)</label>
+                        <input type="number" min={0} max={100} className="field-input bg-white" value={formData.porcentajeComision} onChange={e => setFormData({ ...formData, porcentajeComision: e.target.value })} />
                       </div>
                     </div>
                   </div>
@@ -293,11 +293,11 @@ export const Usuarios = () => {
 
                 {modalMode === 'edit' && mostrarDatosProfesional && selectedProfesionalId && (
                   <div className="bg-warm-50 p-4 rounded-xl border border-warm-100 space-y-3">
-                    <h4 className="font-bold text-warm-900 text-sm flex items-center gap-2"><Clock className="w-4 h-4" /> Horarios de Atención</h4>
-                    <p className="text-xs text-gray-500">Los turnos solo se van a poder agendar dentro de estos horarios (salvo que se marquen como sobreturno).</p>
+                    <p className="eyebrow flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> Horarios de Atención</p>
+                    <p className="text-xs text-warm-500">Los turnos solo se van a poder agendar dentro de estos horarios (salvo que se marquen como sobreturno).</p>
                     <div className="space-y-2">
                       {DIAS_SEMANA.map((dia, i) => (
-                        <div key={dia} className="flex items-center gap-3 bg-white p-2.5 rounded-lg border border-gray-200">
+                        <div key={dia} className="flex items-center gap-3 bg-white p-2.5 rounded-lg border border-warm-200">
                           <label className="flex items-center gap-2 w-32 shrink-0 cursor-pointer">
                             <input
                               type="checkbox"
@@ -305,28 +305,28 @@ export const Usuarios = () => {
                               onChange={e => setHorarios(prev => prev.map((h, idx) => idx === i ? { ...h, activo: e.target.checked } : h))}
                               className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
                             />
-                            <span className="text-sm font-semibold text-gray-700">{dia}</span>
+                            <span className="text-sm font-semibold text-warm-700">{dia}</span>
                           </label>
                           {horarios[i].activo && (
                             <div className="flex items-center gap-2 text-sm">
-                              <input type="time" value={horarios[i].horaInicio} onChange={e => setHorarios(prev => prev.map((h, idx) => idx === i ? { ...h, horaInicio: e.target.value } : h))} className="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg outline-none" />
-                              <span className="text-gray-400">a</span>
-                              <input type="time" value={horarios[i].horaFin} onChange={e => setHorarios(prev => prev.map((h, idx) => idx === i ? { ...h, horaFin: e.target.value } : h))} className="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg outline-none" />
+                              <input type="time" value={horarios[i].horaInicio} onChange={e => setHorarios(prev => prev.map((h, idx) => idx === i ? { ...h, horaInicio: e.target.value } : h))} className="px-2 py-1 bg-warm-50 border border-warm-200 rounded-lg outline-none" />
+                              <span className="text-warm-400">a</span>
+                              <input type="time" value={horarios[i].horaFin} onChange={e => setHorarios(prev => prev.map((h, idx) => idx === i ? { ...h, horaFin: e.target.value } : h))} className="px-2 py-1 bg-warm-50 border border-warm-200 rounded-lg outline-none" />
                             </div>
                           )}
                         </div>
                       ))}
                     </div>
-                    <button type="button" onClick={guardarHorarios} disabled={isSavingHorarios} className="w-full bg-warm-700 hover:bg-warm-800 disabled:opacity-50 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all">
+                    <button type="button" onClick={guardarHorarios} disabled={isSavingHorarios} className="btn-secondary w-full">
                       {isSavingHorarios ? 'Guardando...' : 'Guardar Horarios'}
                     </button>
                   </div>
                 )}
               </div>
 
-              <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 shrink-0">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2 text-gray-600 font-bold hover:bg-gray-200 rounded-xl transition-all">Cancelar</button>
-                <button type="submit" className="bg-brand-600 hover:bg-brand-700 text-white px-8 py-2 rounded-xl font-bold shadow-md transition-all">
+              <div className="p-6 border-t border-warm-100 bg-warm-50 flex justify-end gap-3 shrink-0">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="btn-ghost">Cancelar</button>
+                <button type="submit" className="btn-primary">
                   {modalMode === 'create' ? 'Crear Usuario' : 'Guardar Cambios'}
                 </button>
               </div>

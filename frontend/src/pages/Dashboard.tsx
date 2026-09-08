@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Clock, Users, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { usePacientes } from '../hooks/usePacientes';
 import { useTurnos } from '../hooks/useTurnos';
@@ -44,6 +44,8 @@ const FRASES_INSPIRACIONALES = [
   "No hay deber que descuidemos tanto como el deber de ser felices. - Robert Louis Stevenson"
 ];
 
+const FECHA_HOY = new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+
 export const Dashboard = () => {
   const [fraseDelDia, setFraseDelDia] = useState(FRASES_INSPIRACIONALES[0]);
   const { pacientes } = usePacientes();
@@ -68,72 +70,59 @@ export const Dashboard = () => {
     .sort((a: any, b: any) => new Date(a.fechaHoraInicio).getTime() - new Date(b.fechaHoraInicio).getTime())[0];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      
-      {/* Hero Section - Inspirado en Imagen 1 (Psicología) */}
-      <div className="bg-warm-100 rounded-3xl p-8 relative overflow-hidden flex flex-col md:flex-row items-center gap-8 border border-warm-200">
-        <div className="flex-1 space-y-4">
-          <h1 className="text-3xl md:text-4xl font-serif font-bold text-warm-900 leading-tight min-h-[120px] flex items-center">
+    <div className="space-y-6 animate-in fade-in duration-500">
+
+      {/* Hero editorial */}
+      <div className="bg-warm-900 rounded-2xl p-9 md:p-11 relative overflow-hidden flex flex-col md:flex-row items-center gap-10">
+        <div
+          className="absolute inset-0 opacity-[0.06] pointer-events-none"
+          style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '20px 20px' }}
+        />
+        <div className="flex-1 space-y-5 relative">
+          <p className="eyebrow text-warm-400 capitalize">{FECHA_HOY}</p>
+          <h1 className="font-serif italic text-2xl md:text-3xl text-warm-50 leading-[1.35] min-h-[90px]">
             "{fraseDelDia}"
           </h1>
-          
-          <Link to="/turnos" className="inline-flex bg-warm-700 hover:bg-warm-800 text-white px-6 py-3 rounded-xl font-semibold shadow-md transition-all items-center gap-2 mt-4">
-            Ver Agenda Completa <ArrowRight className="w-5 h-5" />
+          <Link to="/turnos" className="btn-secondary bg-warm-50 border-transparent hover:bg-white">
+            Ver Agenda Completa <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
-        <div 
-          className="w-64 h-64 md:w-80 md:h-80 shrink-0 relative flex items-center justify-center"
+        <div
+          className="w-40 h-40 md:w-48 md:h-48 shrink-0 relative rounded-full ring-4 ring-warm-800"
           style={{
-            WebkitMaskImage: 'radial-gradient(circle closest-side, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%)',
-            maskImage: 'radial-gradient(circle closest-side, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%)'
+            WebkitMaskImage: 'radial-gradient(circle closest-side, rgba(0,0,0,1) 96%, rgba(0,0,0,0) 100%)',
+            maskImage: 'radial-gradient(circle closest-side, rgba(0,0,0,1) 96%, rgba(0,0,0,0) 100%)',
           }}
         >
-          <img src="/images/profesional.jpg" alt="Foto Profesional" className="w-full h-full object-cover mix-blend-multiply" />
+          <img src="/images/profesional.jpg" alt="Foto de perfil" className="w-full h-full object-cover" />
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-warm-100 flex items-start gap-4 hover:shadow-md transition-shadow cursor-pointer">
-          <div className="p-4 bg-warm-50 rounded-2xl text-warm-600">
-            <Users className="w-8 h-8" />
+      {/* Franja "de un vistazo": números editoriales, sin el cliché de icono-en-círculo */}
+      <div className="surface p-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-warm-100">
+          <div className="p-6">
+            <p className="eyebrow">Pacientes</p>
+            <p className="font-serif text-4xl text-warm-900 mt-2">{pacientes.length}</p>
           </div>
-          <div>
-            <h3 className="text-gray-500 text-sm font-semibold mb-1">Total Pacientes</h3>
-            <p className="text-3xl font-serif font-bold text-warm-900">{pacientes.length}</p>
+          <div className="p-6">
+            <p className="eyebrow">Turnos de hoy</p>
+            <p className="font-serif text-4xl text-brand-700 mt-2">{turnosHoy.length}</p>
           </div>
-        </div>
-
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-warm-100 flex items-start gap-4 hover:shadow-md transition-shadow cursor-pointer">
-          <div className="p-4 bg-brand-50 rounded-2xl text-brand-600">
-            <CalendarIcon className="w-8 h-8" />
-          </div>
-          <div>
-            <h3 className="text-gray-500 text-sm font-semibold mb-1">Turnos Programados Hoy</h3>
-            <p className="text-3xl font-serif font-bold text-brand-800">{turnosHoy.length}</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-warm-100 flex items-start gap-4 hover:shadow-md transition-shadow cursor-pointer">
-          <div className="p-4 bg-blue-50 rounded-2xl text-blue-600">
-            <Clock className="w-8 h-8" />
-          </div>
-          <div>
-            <h3 className="text-gray-500 text-sm font-semibold mb-1">Próximo Turno</h3>
+          <div className="p-6">
+            <p className="eyebrow">Próximo turno</p>
             {proximoTurno ? (
-              <>
-                <p className="text-xl font-serif font-bold text-gray-800">
+              <div className="mt-2">
+                <p className="font-serif text-2xl text-warm-900 leading-none">
                   {new Date(proximoTurno.fechaHoraInicio).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} hs
                 </p>
-                <p className="text-sm text-gray-500">{proximoTurno.paciente?.nombre} {proximoTurno.paciente?.apellido}</p>
-              </>
+                <p className="text-sm text-warm-500 mt-1.5">{proximoTurno.paciente?.nombre} {proximoTurno.paciente?.apellido}</p>
+              </div>
             ) : (
-              <p className="text-sm text-gray-500 mt-1">Sin turnos próximos</p>
+              <p className="font-serif text-2xl text-warm-300 mt-2">—</p>
             )}
           </div>
         </div>
-
       </div>
     </div>
   );
