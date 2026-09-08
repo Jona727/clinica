@@ -1,38 +1,77 @@
-# Pacientify 👨‍⚕️
+# Sistema de Gestión Clínica
 
-Este repositorio contiene el código fuente y la documentación de un Sistema de Gestión de Pacientes desarrollado en ASP.NET Core 6 MVC bajo la arquitectura Onion.
+Aplicación web para la gestión de un consultorio/centro de salud: turnos, pacientes, historias clínicas y pagos, con control de acceso por roles.
 
-## Objetivo
+Nació como una solución a medida para una profesional en particular, pensada desde el modelo de datos para poder crecer más adelante a un centro médico con varios profesionales y personal de recepción.
 
-El objetivo principal de este sistema es proporcionar una plataforma completa y eficiente para la administración de pacientes y la gestión de citas médicas. Este software simplifica las tareas de médicos, asistentes y administradores al permitirles llevar un registro organizado de pacientes, programar y gestionar citas médicas, y registrar resultados de pruebas de laboratorio de manera efectiva.
+## Funcionalidades
 
-## Funcionalidades Destacadas
+- **Autenticación y roles**: Administrador, Profesional y Recepción, cada uno con permisos distintos.
+- **Turnos**: agenda semanal/diaria/mensual, cambio de estado (programado, confirmado, en espera, finalizado, cancelado, etc.) y validaciones de horario.
+- **Pacientes**: alta, edición, búsqueda y ficha con historial.
+- **Historias Clínicas**: notas de evolución por consulta, con adjuntos y firma digital.
+- **Pagos y Caja**: registro de cobros vinculados a turnos, con protección contra pagos duplicados o inconsistentes.
+- **Equipo**: el Administrador puede dar de alta, editar y desactivar profesionales y personal de recepción.
+- **Auditoría**: queda registro de las acciones importantes que hace cada usuario.
 
-- **Autenticación y Control de Acceso:** El sistema cuenta con un sólido sistema de autenticación y control de acceso basado en roles, lo que garantiza que los usuarios solo puedan acceder a las funciones autorizadas.
+## Tecnologías
 
-- **Mantenimiento de Usuarios, Médicos y Pruebas de Laboratorio:** Los administradores pueden gestionar fácilmente la información de los usuarios, médicos y pruebas de laboratorio, incluyendo la creación, edición y eliminación de registros.
+- **Backend**: Node.js, Express, Prisma (PostgreSQL), JWT.
+- **Frontend**: React, Vite, TypeScript, Tailwind CSS, React Query.
 
-- **Gestión de Pacientes:** Permite el mantenimiento completo de pacientes, incluyendo su información personal y de contacto, historial médico y detalles adicionales relevantes.
+## Estructura del repositorio
 
-- **Programación y Administración de Citas Médicas:** Los asistentes pueden programar citas médicas de manera eficiente, incluyendo la selección de médicos y pacientes, fechas y horarios, y la causa de la cita. Además, pueden realizar un seguimiento de las citas pendientes y completadas.
+```
+backend/    API REST (Express + Prisma)
+frontend/   Aplicación web (React + Vite)
+```
 
-- **Registro y Seguimiento de Resultados de Pruebas de Laboratorio:** El sistema ofrece la capacidad de registrar resultados de pruebas de laboratorio y asociarlos a pacientes y médicos específicos. También permite el seguimiento del estado de los resultados y su vinculación con las citas médicas.
+## Cómo levantar el proyecto en tu máquina
 
-## Requerimientos Técnicos
+### Requisitos
 
-Para ejecutar este proyecto en tu entorno local, asegúrate de tener instalado lo siguiente:
+- Node.js 20 o superior
+- PostgreSQL corriendo localmente (o accesible por red)
 
-- ASP.NET Core 6 MVC.
-- Entity Framework Core con Code First.
-- Arquitectura Onion para una organización estructurada del proyecto.
-- Bootstrap para un diseño visual atractivo.
-- Repositorios y servicios genéricos para una codificación eficiente.
+### 1. Backend
 
-## Cómo Iniciar
+```bash
+cd backend
+npm install
+```
 
-Para comenzar a trabajar con este proyecto en tu máquina, sigue estos pasos:
+Crear un archivo `.env` dentro de `backend/` con:
 
-1. **Clona el Repositorio:** Utiliza el siguiente comando para clonar este repositorio en tu máquina:
+```
+DATABASE_URL="postgresql://usuario:password@localhost:5432/clinica_db?schema=public"
+JWT_SECRET="una-clave-secreta-larga-y-unica"
+PORT=3000
+```
 
-   ```bash
-   git clone https://github.com/TuUsuario/SistemaGestionPacientes.git
+Crear la base de datos y aplicar el esquema:
+
+```bash
+npx prisma migrate dev
+npx tsx prisma/seed.ts   # crea un centro médico y un usuario administrador de prueba
+```
+
+Levantar el servidor:
+
+```bash
+npm run dev
+```
+
+### 2. Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Por defecto el frontend corre en `http://localhost:5173` y espera a la API en `http://localhost:3000/api`.
+
+### Usuario de prueba (después de correr el seed)
+
+- Usuario: `psicologa`
+- Contraseña: `admin123`
