@@ -78,28 +78,35 @@ Por defecto el frontend corre en `http://localhost:5173` y espera a la API en `h
 
 ## Despliegue en producción
 
-**Importante:** InfinityFree (y la mayoría de los hostings gratuitos tipo "PHP + MySQL") solo sirve archivos estáticos y PHP — **no puede correr el backend** (Node.js/Express) ni una base de datos PostgreSQL. Ahí solo puede alojarse el **frontend**, ya compilado como HTML/CSS/JS estático. El backend necesita un hosting que corra Node.js con una base PostgreSQL (por ejemplo Railway, Render o Fly.io — todos tienen planes gratuitos o muy económicos que alcanzan para este proyecto).
+Se despliega en **Render** (corre tanto el backend en Node.js como el frontend) + **Neon** (base de datos PostgreSQL). Los dos tienen plan gratis permanente y no piden tarjeta. Se descartó InfinityFree porque ese hosting solo sirve PHP + MySQL — no puede ejecutar un backend en Node.js.
 
-### Frontend → InfinityFree (automático)
+El repo incluye `render.yaml`: un "Blueprint" que le dice a Render cómo levantar el backend y el frontend juntos, con un solo clic.
 
-El repo incluye `.github/workflows/deploy-frontend.yml`: cada push a `main` que toque `frontend/` compila el sitio y lo sube por FTP a InfinityFree automáticamente.
+### Primera vez: crear todo
 
-Para activarlo, en GitHub → *Settings → Secrets and variables → Actions* de este repositorio, cargar:
+1. **Base de datos en Neon:**
+   - Crear cuenta gratis en [neon.com](https://neon.com) (no pide tarjeta).
+   - Crear un proyecto nuevo. Copiar la *connection string* que te da (empieza con `postgresql://...`).
 
-**Secrets** (datos sensibles, no se ven en los logs):
-- `FTP_SERVER`: el host FTP que te dio InfinityFree (algo como `ftpupload.net`).
-- `FTP_USERNAME`: tu usuario FTP de InfinityFree.
-- `FTP_PASSWORD`: tu contraseña FTP de InfinityFree.
+2. **Backend + Frontend en Render:**
+   - Crear cuenta gratis en [render.com](https://render.com) (no pide tarjeta).
+   - *New → Blueprint*, conectar este repositorio de GitHub. Render lee `render.yaml` y propone crear los dos servicios (`emuna-clinica-backend` y `emuna-clinica-frontend`).
+   - Antes de confirmar, en el servicio `emuna-clinica-backend` cargar la variable `DATABASE_URL` con la connection string de Neon del paso 1 (el resto de las variables —`JWT_SECRET`, `PORT`— las completa Render solo).
+   - Confirmar y esperar a que terminen los dos despliegues.
 
-**Variables** (no sensibles):
-- `VITE_API_URL`: la URL pública de tu backend ya desplegado, terminada en `/api` (ej. `https://tu-backend.onrender.com/api`). Sin esto, el sitio se compila apuntando a `http://localhost:3000/api` y no va a poder hablar con ningún backend real.
-- `FTP_SERVER_DIR` (opcional): la carpeta remota donde subir el sitio. Por defecto usa `/htdocs/`, que es la raíz web estándar de InfinityFree — pero si el sitio vive en un subdominio o dominio adicional, puede ser otra carpeta (se ve en el File Manager de InfinityFree).
+3. **Cargar los datos iniciales (una sola vez):** desde la pestaña *Shell* del servicio `emuna-clinica-backend` en Render, correr:
+   ```bash
+   npx tsx prisma/seed.ts
+   ```
+   Esto crea el centro médico y el usuario administrador de prueba (ver credenciales más arriba). **No lo corras de nuevo** en despliegues futuros — fallaría porque esos datos ya existen (no hace falta: `render.yaml` solo corre `prisma migrate deploy`, que sí es seguro correr en cada deploy).
 
-También se puede disparar a mano desde la pestaña *Actions* del repo (botón "Run workflow"), sin esperar a un push.
+4. **Revisar la URL real del backend:** Render arma la URL como `https://<nombre-del-servicio>.onrender.com`, pero si ese nombre ya lo usa otra cuenta, Render le agrega un sufijo random al tuyo. Fijate la URL real del backend en su panel de Render; si no coincide con `https://emuna-clinica-backend.onrender.com`, actualizá la variable `VITE_API_URL` del servicio `emuna-clinica-frontend` (agregándole `/api` al final) y volvé a desplegarlo.
 
-### Backend → un hosting con Node.js
+### Después de la primera vez
 
-Todavía sin definir/automatizar. Una vez que se elija dónde va a vivir (Railway, Render, Fly.io, etc.), hay que:
-1. Desplegar `backend/` ahí, con las mismas variables de entorno que en local (`DATABASE_URL` apuntando a una base Postgres real, `JWT_SECRET`, `PORT`).
-2. Correr `npx prisma migrate deploy` contra esa base para crear las tablas.
-3. Cargar esa URL pública como `VITE_API_URL` (ver arriba) para que el frontend en InfinityFree le hable a ese backend.
+Cada push a `main` redespliega solo (Render está conectado al repo). No hace falta ningún paso manual — salvo, claro, si algún día se agrega una migración nueva de Prisma: `render.yaml` ya corre `prisma migrate deploy` en cada arranque del backend, así que se aplica sola.
+
+### Limitaciones a tener en cuenta (plan gratis)
+
+- **Se "duermen" con la inactividad:** tanto el backend de Render como la base de Neon entran en reposo si nadie los usa por un rato. La primera carga después de estar inactivo puede tardar 30-50 segundos en responder mientras "despiertan". Es normal, no es un error.
+- **El disco del backend en Render no es permanente:** los archivos que hoy se guardan en `backend/uploads/` (los adjuntos de Historias Clínicas) se pierden en cada redeploy o reinicio, porque el plan gratis no incluye disco persistente. Todavía no está resuelto — antes de depender de esta función en producción, hay que cambiar dónde se guardan esos archivos (por ejemplo, directo en la base de datos, o en un servicio de almacenamiento aparte).
