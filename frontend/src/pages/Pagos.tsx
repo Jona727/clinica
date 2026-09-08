@@ -30,9 +30,9 @@ export const Pagos = () => {
     new Date(p.createdAt).setHours(0, 0, 0, 0) === hoy && p.estado === 'PAGADO'
   ).reduce((acc: number, p: any) => acc + Number(p.montoTotal), 0) || 0;
 
-  const pendienteCobro = pagos?.filter((p: any) => 
-    p.estado === 'PENDIENTE'
-  ).reduce((acc: number, p: any) => acc + Number(p.montoTotal), 0) || 0;
+  const turnosSinCobrar = turnos?.filter((t: any) =>
+    t.estado !== 'CANCELADO' && !t.pago && new Date(t.fechaHoraInicio) <= new Date()
+  ).length || 0;
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,8 +94,8 @@ export const Pagos = () => {
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
            <div className="flex justify-between items-start">
              <div>
-               <p className="text-sm font-semibold text-gray-500 mb-1">Pendiente de Cobro</p>
-               <h3 className="text-3xl font-bold text-orange-500">${pendienteCobro.toLocaleString()}</h3>
+               <p className="text-sm font-semibold text-gray-500 mb-1">Turnos sin Cobrar</p>
+               <h3 className="text-3xl font-bold text-orange-500">{turnosSinCobrar}</h3>
              </div>
              <div className="p-3 bg-orange-50 text-orange-600 rounded-2xl">
                <ArrowDownRight className="w-6 h-6" />

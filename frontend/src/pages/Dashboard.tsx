@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Clock, Users, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { usePacientes } from '../hooks/usePacientes';
+import { useTurnos } from '../hooks/useTurnos';
 
 const FRASES_INSPIRACIONALES = [
   "Fuerte no es el que nunca se quiebra, fuerte es el que se quiebra, llora, se arma y sigue eligiendo vivir...",
@@ -44,11 +46,26 @@ const FRASES_INSPIRACIONALES = [
 
 export const Dashboard = () => {
   const [fraseDelDia, setFraseDelDia] = useState(FRASES_INSPIRACIONALES[0]);
+  const { pacientes } = usePacientes();
+  const { turnos } = useTurnos();
 
   useEffect(() => {
     const fraseAleatoria = FRASES_INSPIRACIONALES[Math.floor(Math.random() * FRASES_INSPIRACIONALES.length)];
     setFraseDelDia(fraseAleatoria);
   }, []);
+
+  const ahora = new Date();
+  const inicioHoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+  const finHoy = new Date(inicioHoy.getTime() + 24 * 60 * 60 * 1000);
+
+  const turnosHoy = turnos.filter((t: any) => {
+    const inicio = new Date(t.fechaHoraInicio);
+    return t.estado !== 'CANCELADO' && inicio >= inicioHoy && inicio < finHoy;
+  });
+
+  const proximoTurno = turnos
+    .filter((t: any) => t.estado !== 'CANCELADO' && new Date(t.fechaHoraInicio) > ahora)
+    .sort((a: any, b: any) => new Date(a.fechaHoraInicio).getTime() - new Date(b.fechaHoraInicio).getTime())[0];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -83,8 +100,8 @@ export const Dashboard = () => {
             <Users className="w-8 h-8" />
           </div>
           <div>
-            <h3 className="text-gray-500 text-sm font-semibold mb-1">Total Pacientes Activos</h3>
-            <p className="text-3xl font-serif font-bold text-warm-900">124</p>
+            <h3 className="text-gray-500 text-sm font-semibold mb-1">Total Pacientes</h3>
+            <p className="text-3xl font-serif font-bold text-warm-900">{pacientes.length}</p>
           </div>
         </div>
 
@@ -94,7 +111,7 @@ export const Dashboard = () => {
           </div>
           <div>
             <h3 className="text-gray-500 text-sm font-semibold mb-1">Turnos Programados Hoy</h3>
-            <p className="text-3xl font-serif font-bold text-brand-800">5</p>
+            <p className="text-3xl font-serif font-bold text-brand-800">{turnosHoy.length}</p>
           </div>
         </div>
 
@@ -104,8 +121,16 @@ export const Dashboard = () => {
           </div>
           <div>
             <h3 className="text-gray-500 text-sm font-semibold mb-1">Próximo Turno</h3>
-            <p className="text-xl font-serif font-bold text-gray-800">15:00 hs</p>
-            <p className="text-sm text-gray-500">María González</p>
+            {proximoTurno ? (
+              <>
+                <p className="text-xl font-serif font-bold text-gray-800">
+                  {new Date(proximoTurno.fechaHoraInicio).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} hs
+                </p>
+                <p className="text-sm text-gray-500">{proximoTurno.paciente?.nombre} {proximoTurno.paciente?.apellido}</p>
+              </>
+            ) : (
+              <p className="text-sm text-gray-500 mt-1">Sin turnos próximos</p>
+            )}
           </div>
         </div>
 
