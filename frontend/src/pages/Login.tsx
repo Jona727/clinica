@@ -3,9 +3,9 @@ import { Stethoscope } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 export const Login = () => {
-  const [username, setUsername] = useState('psicologa');
-  const [password, setPassword] = useState('123'); 
-  const { login, isLoading, error: authError } = useAuth();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const { login, isLoading } = useAuth();
   const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
+import { JWT_SECRET } from '../lib/env';
 
 type UsuarioConNombre = {
   nombre?: string | null;
@@ -40,7 +41,7 @@ export const login = async (req: Request, res: Response) => {
       profesionalId: usuario.profesional?.id
     };
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: '8h' });
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
 
     res.json({
       token,

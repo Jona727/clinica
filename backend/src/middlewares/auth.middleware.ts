@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
 import { RolUsuario } from '@prisma/client';
+import { JWT_SECRET } from '../lib/env';
 
 export interface AuthPayload {
   usuarioId: string;
@@ -27,9 +28,8 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     }
 
     const token = authHeader.split(' ')[1];
-    const secret = process.env.JWT_SECRET || 'secret';
 
-    const decoded = jwt.verify(token, secret) as AuthPayload;
+    const decoded = jwt.verify(token, JWT_SECRET) as AuthPayload;
     req.user = decoded;
 
     // Opcional: Verificar que el usuario sigue activo
