@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, Lock, Unlock, Edit3, FileDown, X, Paperclip, FileImage, FileText, Send } from 'lucide-react';
+import { Search, Lock, Unlock, Edit3, FileDown, X, Paperclip, FileImage, FileText, Send, Trash2 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { usePacientes } from '../hooks/usePacientes';
 import { useHistoriasClinicas } from '../hooks/useHistoriasClinicas';
 import { useDerivaciones } from '../hooks/useDerivaciones';
 import { useProfesionales } from '../hooks/useProfesionales';
+import { promptSudo } from '../utils/sudoPrompt';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -16,7 +17,7 @@ export const HistoriasClinicas = () => {
   const { pacientes, isLoading: isLoadingPacientes } = usePacientes();
   const [selectedPacienteId, setSelectedPacienteId] = useState<string | undefined>(undefined);
   
-  const { evoluciones, isLoading: isLoadingEvoluciones, createEvolucion, firmarEvolucion, isCreating } = useHistoriasClinicas(selectedPacienteId);
+  const { evoluciones, isLoading: isLoadingEvoluciones, createEvolucion, firmarEvolucion, deleteEvolucion, isCreating } = useHistoriasClinicas(selectedPacienteId);
   const { derivaciones, createDerivacion, isCreating: isCreatingDerivacion } = useDerivaciones(selectedPacienteId);
   const { profesionales } = useProfesionales();
 
@@ -109,6 +110,28 @@ export const HistoriasClinicas = () => {
         toast.success('Evolución firmada correctamente');
       } catch (err: any) {
         toast.error(err.response?.data?.message || 'Error al firmar');
+      }
+    }
+  };
+
+  const handleEliminarEvolucion = async (id: string) => {
+    if (!window.confirm('¿Estás seguro de eliminar esta nota? Esta acción no se puede deshacer.')) return;
+    try {
+      await deleteEvolucion({ id });
+      toast.success('Nota eliminada');
+    } catch (err: any) {
+      if (err.response?.data?.message === 'SUDO_REQUIRED' || err.response?.data?.message === 'SUDO_INVALID') {
+        const pwd = await promptSudo(err.response.data.detail);
+        if (pwd) {
+          try {
+            await deleteEvolucion({ id, sudoPassword: pwd });
+            toast.success('Nota eliminada');
+          } catch (error: any) {
+            toast.error(error.response?.data?.detail || 'Contraseña incorrecta');
+          }
+        }
+      } else {
+        toast.error(err.response?.data?.message || 'Error al eliminar la nota');
       }
     }
   };
@@ -329,9 +352,14 @@ export const HistoriasClinicas = () => {
                               {ev.estaFirmada ? (
                                 <span className="badge-success">Sello Digital</span>
                               ) : (
-                                <button onClick={() => handleFirmar(ev.id)} className="text-[10px] uppercase font-bold text-brand-700 hover:bg-brand-50 bg-white border border-brand-200 px-3 py-1 rounded-md transition-colors flex items-center gap-1">
-                                  <Lock className="w-3 h-3" /> Firmar
-                                </button>
+                                <div className="flex items-center gap-1.5">
+                                  <button onClick={() => handleEliminarEvolucion(ev.id)} className="text-warm-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-md transition-colors" title="Eliminar nota">
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button onClick={() => handleFirmar(ev.id)} className="text-[10px] uppercase font-bold text-brand-700 hover:bg-brand-50 bg-white border border-brand-200 px-3 py-1 rounded-md transition-colors flex items-center gap-1">
+                                    <Lock className="w-3 h-3" /> Firmar
+                                  </button>
+                                </div>
                               )}
                             </div>
                             <p className="text-sm text-warm-700 whitespace-pre-wrap leading-relaxed">{ev.notaClinica}</p>
