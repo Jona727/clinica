@@ -18,6 +18,12 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/turnos', label: 'Turnos', icon: Calendar },
   { to: '/pacientes', label: 'Pacientes', icon: Users },
+];
+
+// Recepción no tiene acceso a historias clínicas ni a la caja
+// (confidencialidad médica y manejo de dinero) — el backend ya lo
+// bloquea, esto solo evita mostrarle links a los que no puede entrar.
+const NAV_ITEMS_CLINICO: NavItem[] = [
   { to: '/historias-clinicas', label: 'Historias Clínicas', icon: FileText },
   { to: '/pagos', label: 'Pagos y Caja', icon: CreditCard },
 ];
@@ -57,7 +63,11 @@ export const MainLayout = () => {
     .join('')
     .toUpperCase();
 
-  const items = usuario?.rol === 'ADMIN' ? [...NAV_ITEMS, ...NAV_ITEMS_ADMIN] : NAV_ITEMS;
+  const items = [
+    ...NAV_ITEMS,
+    ...(usuario?.rol !== 'RECEPCION' ? NAV_ITEMS_CLINICO : []),
+    ...(usuario?.rol === 'ADMIN' ? NAV_ITEMS_ADMIN : []),
+  ];
   const paginaActual = items.find(i => i.end ? location.pathname === i.to : location.pathname.startsWith(i.to));
 
   return (
