@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Outlet, Navigate, Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Calendar, Users, FileText, CreditCard, LogOut, UserCog, ShieldCheck, Menu, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAuth } from '../../hooks/useAuth';
+import { useInactivityLogout } from '../../hooks/useInactivityLogout';
 import logoIcon from '../../assets/logo-emuna-icon.png';
 
 const ROLES_LABEL: Record<string, string> = {
@@ -34,6 +36,11 @@ export const MainLayout = () => {
   useEffect(() => {
     setIsSidebarOpen(false);
   }, [location.pathname]);
+
+  useInactivityLogout(() => {
+    logout();
+    toast.error('Sesión cerrada por inactividad', { duration: 5000 });
+  });
 
   if (!token) {
     return <Navigate to="/login" replace />;
