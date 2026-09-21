@@ -14,8 +14,9 @@ const ROLES_LABEL: Record<string, string> = {
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; end?: boolean };
 
+const NAV_DASHBOARD: NavItem = { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true };
+
 const NAV_ITEMS: NavItem[] = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/turnos', label: 'Turnos', icon: Calendar },
   { to: '/pacientes', label: 'Pacientes', icon: Users },
 ];
@@ -64,6 +65,7 @@ export const MainLayout = () => {
     .toUpperCase();
 
   const items = [
+    ...(usuario?.rol !== 'RECEPCION' ? [NAV_DASHBOARD] : []),
     ...NAV_ITEMS,
     ...(usuario?.rol !== 'RECEPCION' ? NAV_ITEMS_CLINICO : []),
     ...(usuario?.rol === 'ADMIN' ? NAV_ITEMS_ADMIN : []),
